@@ -10,7 +10,6 @@ void error_exit(char * errmsg, int errno){
     printf("       input file must exist in the same directory and have a .in extension, \n");
     printf("       generations must be a non-zero integer. \n");
   }
-
-
+  
   exit(errno);
 }
