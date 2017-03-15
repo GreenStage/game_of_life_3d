@@ -15,9 +15,6 @@ int main(int argc, char * argv[]){
   char line[MAX_LINE_SIZE];
   FILE * inputFile;
   world_stct *world;
-  cell_stct *aux1, *aux2;
-  Position pos;
-
 
   if(argc < 3){
     error_exit("Error: Missing argument",ERR_MISSING_ARG);
@@ -50,15 +47,7 @@ int main(int argc, char * argv[]){
     world->cell_list = insert_new_cell(world->cell_list,x,y,z);
   }
 
-  for(aux1 = world->cell_list; aux1 != NULL; aux1 = aux1->next){
-    for(aux2 = aux1->next; aux2 != NULL; aux2 = aux2->next){
-      if((pos = belongs_to_diamond(aux1->x, aux1->y, aux1->z, aux2->x, aux2->y, aux2->z) != NONE){
-        if(pos != FRONT && pos != BACK && pos != LEFT && pos != RIGHT && pos != UP && pos != DOWN)
-          aux1->second_neighbors[]
-      }
+  world_map(world->cell_list);
 
-    }
-
-  }
   return 0;
 }
