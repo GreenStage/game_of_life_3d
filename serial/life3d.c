@@ -13,9 +13,9 @@ int main(int argc, char * argv[]){
   int i;
   char line[MAX_LINE_SIZE];
   FILE * inputFile;
-  cell_tmp * cell_ptr, * aux;
-  mini_world * first;
-  mini_world * world;
+  world_stct world;
+
+
   if(argc < 3){
     error_exit("Error: Missing argument",ERR_MISSING_ARG);
   }
@@ -37,19 +37,17 @@ int main(int argc, char * argv[]){
   if (!sscanf(line,"%d", &cube_size)){
     error_exit("Error: Invalid cube size",ERR_INVALID_SIZE);
   }
-  cell_ptr = NULL;
+
+  world.cell_ptr = NULL;
+  world.init( new_cell() );
+
   for(i=0; fgets(line,MAX_LINE_SIZE,inputFile) ;i++){
 
     if (!sscanf(line,"%d %d %d", &x,&y,&z)){
       error_exit("Error: Invalid position",ERR_INVALID_POS);
     }
-    cell_ptr = add_cell_tmp(cell_ptr,x,y,z);
+    world.cell_ptr = world.add_cell(ptr,elements,x,y,z);
   }
-
-  for(i=0; aux = cell_ptr; aux != NULL;i++; aux = aux->next){
-    world = miniworld_new(cube_size,aux)
-    if( i == 0) first = world;
-    world->add_cell(x,y,z)
-  }
+  world_map(&world);
 
 }

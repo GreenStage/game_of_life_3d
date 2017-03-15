@@ -1,13 +1,7 @@
-#include "cell.h"
 
-#define MINI_SIZE 4
-
-typedef struct mini_world_{
+typedef struct world_stct_ {
   int size;
-  cell_stct * center;
-  struct mini_world_ * next;
-  void (* world_destroy)();
-} mini_world;
+  void * cell_ptr;
+  void * (* add_cell)();
 
-mini_world * miniworld_new();
-void miniworld_destroy(mini_world * mini_world);
+} world_stct;
