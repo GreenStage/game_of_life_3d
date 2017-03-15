@@ -3,7 +3,7 @@
 
 #define DEBBUG
 
-typedef enum position{
+typedef enum position {
   NONE = 0,
   FRONT = 0b000000000001,
   BACK = 0b000000000100,

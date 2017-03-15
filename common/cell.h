@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "defs.h"
 
 /*TYPES*/
 typedef enum state{dead, alive, undefined}State;
@@ -20,10 +21,10 @@ typedef struct cell_{
 /*FUNCTIONS*/
 cell_stct * insert_new_cell( cell_stct * ptr, int x , int y, int z);
 
-int belongs_to_diamond(int xcomp, int ycomp, int zcomp, int x, int y, int z);
+Position belongs_to_diamond(int xcomp, int ycomp, int zcomp, int x, int y, int z);
 
 Position get_first_neighbour_pos(int coord_dif[3]);
 
-Position get_neighbour_pos( distance, int coord_dif[3])
+Position get_neighbour_pos( int distance, int coord_dif[3]);
 
 #endif
