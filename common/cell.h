@@ -1,4 +1,10 @@
 typedef struct cell_{
-  enum { dead, alive } state;
-  enum { dead, alive } next_state;
+int x,y,z;
+int first_neighbors[6];
+int second_neighbors[18];
 } cell_stct;
+
+typdef struct cell_tmp_{
+  cell_stct * ptr;
+  struct cell_tmp_ * next;
+} cell_tmp;
