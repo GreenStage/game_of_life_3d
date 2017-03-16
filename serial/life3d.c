@@ -3,8 +3,8 @@
 #include <string.h>
 #include "../common/defs.h"
 #include "../common/error.h"
-#include "../common/cell.h"
-#include "../common/world.h"
+#include "../map/cell.h"
+#include "../map/world.h"
 
 
 int main(int argc, char * argv[]){

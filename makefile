@@ -1,18 +1,27 @@
 #makefile
+
 all: life3d
-life3d: main.o error.o world.o
-	gcc -o life3d main.o error.o world.o
+life3d: serial/main.o common/error.o map/world.o map/cell.o
+	gcc -o life3d serial/main.o common/error.o map/world.o map/cell.o
 
-main.o: serial/life3d.c common/error.h common/defs.h common/world.h
-	gcc -o main.o -c serial/life3d.c -W -Wall -ansi -pedantic -g
+serial/main.o: serial/life3d.c common/error.h common/defs.h map/cell.h map/world.h
+	cd serial && gcc -o main.o -c life3d.c && \
+	cd ..
 
-world.o: common/world.c common/world.h common/error.h common/common.h common/cell.h
-	gcc -o world.o -c common/world.c -W -Wall -ansi -pedantic
+map/world.o: map/world.c map/world.h map/cell.h common/error.h common/defs.h
+	cd map && gcc -o world.o -c world.c -W -Wall -ansi && \
+	cd ..
 
-error.o: common/error.c
-	gcc -o error.o -c common/error.c -W -Wall -ansi -pedantic
+map/cell.o: map/cell.c map/cell.h common/error.h common/defs.h
+	cd map && gcc -o cell.o -c cell.c -W -Wall -ansi && \
+	cd ..
+
+common/error.o: common/error.c common/error.h
+	cd common && gcc -o error.o -c error.c -W -Wall -ansi && \
+	cd ..
 
 clean:
-	rm -rf *.o
-clean_serial: clean
+	cd serial && rm -rf *.o && cd ..;\
+	cd map && rm -rf *.o && cd ..; \
+	cd common && rm -rf *.o&& cd ..; \
 	rm -rf life3d

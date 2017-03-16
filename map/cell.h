@@ -1,9 +1,7 @@
-#ifndef CELLHEADER
-#define CELLHEADER
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include "defs.h"
+#ifndef CELL_HEADER
+#define CELL_HEADER
+
+#include "../common/defs.h"
 
 /*TYPES*/
 typedef enum state {dead, alive, undefined} State;

@@ -1,3 +1,6 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include "cell.h"
 
 cell_stct * insert_new_cell( cell_stct * ptr, int x , int y, int z){
@@ -19,7 +22,7 @@ cell_stct * insert_new_cell( cell_stct * ptr, int x , int y, int z){
 Position belongs_to_diamond(int xcomp, int ycomp, int zcomp, int x, int y, int z){
   int distance;
   Position pos = NONE;
-  int coord_dif[3] = {xcomp - x, ycomp - y, zcomp - z};
+  int coord_dif[3] = {x - xcomp, y - ycomp, z - zcomp};
 
   if((distance = abs(coord_dif[0]) + abs(coord_dif[1]) + abs(coord_dif[2])) == 1 || distance == 2)
     pos = get_neighbour_pos(distance, coord_dif);
@@ -44,9 +47,14 @@ Position belongs_to_diamond(int xcomp, int ycomp, int zcomp, int x, int y, int z
 
 Position get_neighbour_pos(int distance, int coord_dif[3]){
   int is_negative = 0, i;
-  Position pos;
+  Position pos = NONE;
+
+#ifdef DEBUG
+  printf("coord_dif : [%d,%d,%d] , ",coord_dif[0],coord_dif[1],coord_dif[2]);
+#endif
+
   for(i = 0; i< 3; i++){
-    is_negative = (coord_dif < 0) ? 2 : 0;
+    is_negative = (coord_dif[i] < 0) ? 2 : 0;
 
     if(coord_dif[i] == 2 || coord_dif[i] == -2){
       pos = (0b11 << (i * 4 + is_negative));
@@ -62,22 +70,3 @@ Position get_neighbour_pos(int distance, int coord_dif[3]){
 
   return pos;
 }
-
-/*Position get_first_neighbour_pos(int coord_dif[3]){
-  if(coord_dif[0] != 0){
-    if(coord_dif[0] < 0)
-      pos = FRONT;
-    else
-      pos = BACK;
-  } else if(coord_dif[1] != 0){
-    if(coord_dif[1] < 0)
-      pos = LEFT;
-    else
-      pos = RIGHT;
-  } else if(coord_dif[2] != 0){
-    if(coord_dif[2] < 0)
-      pos = UP;
-    else
-      pos = DOWN;
-  }
-}*/
