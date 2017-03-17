@@ -5,7 +5,7 @@
 
 typedef enum position {
   NONE  = 0,
-  FRONT = 0b000000000001, /*1*/
+  FRONT = 0b000000000001, /*1*/ 
   BACK  = 0b000000000100, /*4*/
   RIGHT = 0b000000010000, /*16*/
   LEFT  = 0b000001000000, /*54*/
@@ -23,7 +23,7 @@ typedef enum position {
 
   U1_L1 = UP    | LEFT,
   U1_R1 = UP    | RIGHT,
-  U1_F1 = UP    | FRONT,
+  U1_F1 = UP    | FRONT, /*257*/
   U1_B1 = UP    | BACK,
   D1_L1 = DOWN  | LEFT,
   D1_R1 = DOWN  | RIGHT,

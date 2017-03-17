@@ -11,7 +11,6 @@ cell_stct * insert_new_cell( cell_stct * ptr, int x , int y, int z){
   new_cell->x = x;
   new_cell->y = y;
   new_cell->z = z;
-  new_cell->visited = 0;
   new_cell->state = alive;
   new_cell->next_state = undefined;
   new_cell->next = ptr;
@@ -19,54 +18,50 @@ cell_stct * insert_new_cell( cell_stct * ptr, int x , int y, int z){
   return new_cell;
 }
 
-Position belongs_to_diamond(int xcomp, int ycomp, int zcomp, int x, int y, int z){
-  int distance;
-  Position pos = NONE;
-  int coord_dif[3] = {x - xcomp, y - ycomp, z - zcomp};
-
-  if((distance = abs(coord_dif[0]) + abs(coord_dif[1]) + abs(coord_dif[2])) == 1 || distance == 2)
-    pos = get_neighbour_pos(distance, coord_dif);
-  else
-    pos = NONE;
-
-  /*switch((distance = (abs(coord_dif[0]) + abs(coord_dif[1]) + abs(coord_dif[2]))){
-    case 1: //is first neighbour
-      pos = get_first_neighbour_pos(coord_dif);
-      break;
-
-    case 2: //is 2nd neighbour
-      pos = get_neighbour_pos(distance, coord_dif);
-      break;
-
-    default:
-      pos = NONE;
-      break;
-  }*/
-  return pos;
+State cell_get_next_state(State current_state,int neighbors){
+  if( current_state == alive && neighbors >= 2 && neighbors <= 4){
+    return alive;
+  }
+  else if( current_state == dead && (neighbors == 2 || neighbors == 3) ){
+    return alive;
+  }
+  else return dead;
 }
 
-Position get_neighbour_pos(int distance, int coord_dif[3]){
-  int is_negative = 0, i;
-  Position pos = NONE;
+void get_neighbors_by_key(int retval[5], int key){
 
-#ifdef DEBUG
-  printf("coord_dif : [%d,%d,%d] , ",coord_dif[0],coord_dif[1],coord_dif[2]);
-#endif
-
-  for(i = 0; i< 3; i++){
-    is_negative = (coord_dif[i] < 0) ? 2 : 0;
-
-    if(coord_dif[i] == 2 || coord_dif[i] == -2){
-      pos = (0b11 << (i * 4 + is_negative));
+  switch(key){
+    case 0: /*Front*/
+      retval[0]=2; retval[1]=6; retval[2]=10;
+      retval[3]=11; retval[4]=12;
       break;
-    }
-    else if(coord_dif[i] == 1 || coord_dif[i] == -1){
-      pos = pos | (0b01 << (i * 4 + is_negative));
-      if(distance == 1)
-        break;
-    }
-    else continue;
-  }
 
-  return pos;
+    case 1:
+       retval[0]=3; retval[1]=7; retval[2]=8;
+       retval[3]=9; retval[4]=13;
+      break;
+
+    case 2:
+       retval[0]=1; retval[1]=5; retval[2]=9;
+       retval[3]=11; retval[4]=14;
+      break;
+
+    case 3:
+       retval[0]=0; retval[1]=4; retval[2]=8;
+       retval[3]=10; retval[4]=15;
+      break;
+
+    case 4:
+       retval[0]=0; retval[1]=1; retval[2]=2;
+       retval[3]=3; retval[4]=16;
+      break;
+
+    case 5:
+    default:
+       retval[0]=4; retval[1]=5; retval[2]=6;
+       retval[3]=7; retval[4]=17;
+      break;
+
+  }
+  return;
 }
