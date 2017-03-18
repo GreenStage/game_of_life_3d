@@ -44,6 +44,7 @@ void world_map(void* cell_list){
         case B2:
             break;
         case L2:
+            printf("L2\n");
             break;
         case R2:
           printf("R2\n");

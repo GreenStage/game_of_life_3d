@@ -21,9 +21,10 @@ Position belongs_to_diamond(int xcomp, int ycomp, int zcomp, int x, int y, int z
   Position pos = NONE;
   int coord_dif[3] = {xcomp - x, ycomp - y, zcomp - z};
 
-  if((distance = abs(coord_dif[0]) + abs(coord_dif[1]) + abs(coord_dif[2])) == 1 || distance == 2)
+  if((distance = abs(coord_dif[0]) + abs(coord_dif[1]) + abs(coord_dif[2])) == 1 || distance == 2){
     pos = get_neighbour_pos(distance, coord_dif);
-  else
+    printf("btd %d\n", distance);
+  } else
     pos = NONE;
 
   /*switch((distance = (abs(coord_dif[0]) + abs(coord_dif[1]) + abs(coord_dif[2]))){
