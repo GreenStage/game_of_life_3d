@@ -13,7 +13,7 @@ world_stct * init_world( int size){
 }
 
 void world_map(cell_stct * cell_list){
-  int first_neighbors_ctr, i, j  ;
+  int first_neighbors_ctr, i, j;
   int neighbor_neigh[6], count_n_neigh;
   cell_stct * aux1, *aux2;
   Position pos;
@@ -24,6 +24,7 @@ void world_map(cell_stct * cell_list){
 
     for(aux1 = cell_list; aux1 != NULL; aux1 = aux1->next){
       first_neighbors_ctr = 0;
+
 #ifdef DEBUG
       printf("Cell list processing at position %d\n", counter);
       counter++;
@@ -49,6 +50,7 @@ void world_map(cell_stct * cell_list){
           break;
 
         case RIGHT:
+          first_neighbors_ctr++;
           aux1->first_neighbors[2] = aux2;
           aux2->first_neighbors[3] = aux1;
           break;
@@ -171,7 +173,9 @@ void world_map(cell_stct * cell_list){
 #ifdef DEBUG
         if( pos != 0) printf("Cell (%d,%d,%d) is <%d> of cell (%d,%d,%d)\n",aux2->x,aux2->y,aux2->z,pos,aux1->x,aux1->y,aux1->z);
 #endif
-    }
+
+
+  }/*inner loop*/
   aux1->next_state = cell_get_next_state(aux1->state,first_neighbors_ctr);
 
     for(i=0;i<6;i++){
@@ -228,4 +232,13 @@ Position get_neighbour_pos(int distance, int coord_dif[3]){
   }
 
   return pos;
+}
+
+void clear_map(cell_stct *list){
+  cell_stct *aux1, *aux2;
+
+  for(aux1 = list; aux1 != NULL; aux1 = aux2){
+    aux2 = aux1->next;
+    free(aux1);
+  }
 }

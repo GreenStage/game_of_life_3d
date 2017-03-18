@@ -47,11 +47,14 @@ int main(int argc, char * argv[]){
     world->cell_list = insert_new_cell(world->cell_list,x,y,z);
   }
 
+#ifndef DEBUG
   cell_stct *auxx;
   for(auxx = world->cell_list; auxx != NULL; auxx = auxx->next)
     printf("%d %d %d\n", auxx->x, auxx->y, auxx->z);
+#endif
+
 
   world_map(world->cell_list);
-
+  clear_map(world->cell_list);
   return 0;
 }
