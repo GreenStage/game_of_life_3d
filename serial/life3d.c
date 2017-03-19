@@ -10,7 +10,7 @@
 int main(int argc, char * argv[]){
 
   int generations, cube_size;
-  int x,y,z;
+  pos_ pos;
   int i;
   char line[MAX_LINE_SIZE];
   FILE * inputFile;
@@ -41,13 +41,16 @@ int main(int argc, char * argv[]){
   world = init_world( cube_size);
 
   for(i=0; fgets(line,MAX_LINE_SIZE,inputFile) ;i++){
-    if (!sscanf(line,"%d %d %d", &x,&y,&z))
+    if (!sscanf(line,"%d %d %d", &pos.x,&pos.y,&pos.z))
       error_exit("Error: Invalid position",ERR_INVALID_POS);
 
-    world->cell_list = insert_new_cell(world->cell_list,x,y,z);
+    world->cell_list = insert_new_cell(world->cell_list,pos);
   }
 
-  world_map(world->cell_list);
-
+  world = world_map(world);
+  world = world_update_state(world);
+#ifdef DEBUG
+  cell_list_print(world->cell_list);
+#endif
   return 0;
 }

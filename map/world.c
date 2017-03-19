@@ -12,8 +12,10 @@ world_stct * init_world( int size){
   return new_world;
 }
 
-void world_map(cell_stct * cell_list){
+world_stct * world_map(world_stct * world){
+  cell_stct * cell_list = world->cell_list;
   int first_neighbors_ctr, i, j  ;
+  State next_state;
   int neighbor_neigh[6], count_n_neigh;
   cell_stct * aux1, *aux2;
   Position pos;
@@ -30,7 +32,7 @@ void world_map(cell_stct * cell_list){
 #endif
 
     for(aux2 = aux1->next; aux2 != NULL; aux2 = aux2->next){
-      pos = belongs_to_diamond(aux1->x, aux1->y, aux1->z, aux2->x, aux2->y, aux2->z);
+      pos = belongs_to_diamond(aux1->pos.x, aux1->pos.y, aux1->pos.z, aux2->pos.x, aux2->pos.y, aux2->pos.z);
       switch(pos){
 
         case NONE:
@@ -49,6 +51,7 @@ void world_map(cell_stct * cell_list){
           break;
 
         case RIGHT:
+          first_neighbors_ctr++;
           aux1->first_neighbors[2] = aux2;
           aux2->first_neighbors[3] = aux1;
           break;
@@ -163,31 +166,52 @@ void world_map(cell_stct * cell_list){
 
         default:
 #ifdef DEBUG
-          printf("ERROR NOW: Cell (%d,%d,%d) is <%d> of cell (%d,%d,%d)\n",aux2->x,aux2->y,aux2->z,pos,aux1->x,aux1->y,aux1->z);
+          printf("ERROR NOW: Cell (%d,%d,%d) is <%d> of cell (%d,%d,%d)\n",aux2->pos.x,aux2->pos.y,aux2->pos.z,pos,aux1->pos.x,aux1->pos.y,aux1->pos.z);
 #endif
           error_exit("Error: Invalid Position when building World ()", 18);
           break;
       }
 #ifdef DEBUG
-        if( pos != 0) printf("Cell (%d,%d,%d) is <%d> of cell (%d,%d,%d)\n",aux2->x,aux2->y,aux2->z,pos,aux1->x,aux1->y,aux1->z);
+        if( pos != 0) printf("Cell (%d,%d,%d) is <%d> of cell (%d,%d,%d)\n",aux2->pos.x,aux2->pos.y,aux2->pos.z,pos,aux1->pos.x,aux1->pos.y,aux1->pos.z);
 #endif
     }
+#ifdef DEBUG
+printf("Cell (%d,%d,%d) has %d neighbors\n",aux1->pos.x,aux1->pos.y,aux1->pos.z,first_neighbors_ctr);
+#endif
   aux1->next_state = cell_get_next_state(aux1->state,first_neighbors_ctr);
 
+#ifdef DEBUG
+  printf("Cell (%d,%d,%d) next state is %d\n",aux1->pos.x,aux1->pos.y,aux1->pos.z,aux1->next_state);
+#endif
     for(i=0;i<6;i++){
+
       count_n_neigh=0;
       if(aux1->first_neighbors[i] == NULL){
+
         get_neighbors_by_key(neighbor_neigh,i);
         for(j = 0; j < 5; j++){
           if(aux1->second_neighbors[neighbor_neigh[j]] != NULL)
             count_n_neigh++;
         }
-        if( count_n_neigh > 0 )
-          aux1->first_neighbors[i]->next_state = cell_get_next_state(aux1->first_neighbors[i]->state,count_n_neigh);
+        if( count_n_neigh > 0 ){
+
+          next_state = cell_get_next_state(dead,count_n_neigh);
+          if(next_state == alive){
+
+            cell_list = insert_new_cell(cell_list,get_absolute(aux1,i)) ;
+            cell_list->next_state = alive;
+            aux1->first_neighbors[i] = cell_list;
+#ifdef DEBUG
+            printf("Cell (%d,%d,%d) next state is %d\n",cell_list->pos.x,cell_list->pos.y,cell_list->pos.z,cell_list->next_state);
+#endif
+          }
+        }
       }
+
     }
   }
-
+  world->cell_list = cell_list;
+  return world;
 }
 
 
@@ -228,4 +252,29 @@ Position get_neighbour_pos(int distance, int coord_dif[3]){
   }
 
   return pos;
+}
+world_stct * world_update_state(world_stct * world){
+  cell_stct * head = world->cell_list;
+  int i;
+  cell_stct * aux,*aux2;
+
+  for(i = 0, aux = head , aux2 = NULL;aux != NULL; i++){
+
+    if(aux->next_state == dead) {
+      if(head == aux){
+        aux = cell_remove_next(aux2,aux);
+        head = aux;
+      }
+      else aux = cell_remove_next(aux2,aux);
+    }
+    else{
+      aux->state = aux->next_state;
+      aux->next_state = undefined;
+      aux2 = aux;
+      aux = aux->next;
+    }
+
+  }
+  world->cell_list = head;
+  return world;
 }

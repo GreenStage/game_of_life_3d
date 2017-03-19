@@ -3,21 +3,26 @@
 #include <string.h>
 #include "cell.h"
 
-cell_stct * insert_new_cell( cell_stct * ptr, int x , int y, int z){
+cell_stct * insert_new_cell( cell_stct * ptr, pos_ pos){
 
   cell_stct *new_cell = (cell_stct*) malloc(sizeof(cell_stct));
   memset(new_cell,0,sizeof(cell_stct));
 
-  new_cell->x = x;
-  new_cell->y = y;
-  new_cell->z = z;
+  new_cell->pos.x = pos.x;
+  new_cell->pos.y = pos.y;
+  new_cell->pos.z = pos.z;
   new_cell->state = alive;
   new_cell->next_state = undefined;
   new_cell->next = ptr;
 
   return new_cell;
 }
-
+cell_stct * cell_remove_next(cell_stct * prev,cell_stct * cell){
+  cell_stct * aux = cell->next;
+  if ( prev != NULL ) prev->next = aux;
+  free(cell);
+  return aux ;
+}
 State cell_get_next_state(State current_state,int neighbors){
   if( current_state == alive && neighbors >= 2 && neighbors <= 4){
     return alive;
@@ -27,6 +32,7 @@ State cell_get_next_state(State current_state,int neighbors){
   }
   else return dead;
 }
+
 
 void get_neighbors_by_key(int retval[5], int key){
 
@@ -65,3 +71,38 @@ void get_neighbors_by_key(int retval[5], int key){
   }
   return;
 }
+
+pos_ get_absolute(cell_stct * cell, int relative_position){
+  pos_ retval = cell->pos;
+  switch(relative_position){
+    case 0:
+      retval.x ++;
+      break;
+    case 1:
+      retval.x --;
+      break;
+    case 2:
+      retval.y ++;
+      break;
+    case 3:
+      retval.y --;
+      break;
+    case 4:
+      retval.z ++;
+      break;
+    case 5:
+      retval.z --;
+      break;
+    default:
+      break;
+  }
+  return retval;
+}
+#ifdef DEBUG
+  void cell_list_print(cell_stct * ptr){
+    cell_stct * aux;
+    printf("____________________\n");
+    for(aux = ptr; aux != NULL; aux = aux->next)
+      printf("(%d,%d,%d) is %s\n", aux->pos.x,aux->pos.y,aux->pos.z,state_to_str(aux->state) );
+  }
+#endif
