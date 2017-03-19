@@ -3,6 +3,7 @@
 
 #define DEBUG
 
+typedef enum bool_ {false,true} bool;
 typedef enum position {
   NONE  = 0,
   FRONT = 0b000000000001, /*1*/

@@ -6,13 +6,16 @@
 
 typedef struct world_stct {
   int size;
-  void * cell_list;
+  cell_ptr cell_list;
 }world_stct;
+
+/*INIT FUNCTION*/
+
 
 world_stct * init_world( int size);
 
 world_stct * world_map(world_stct * world);
-Position belongs_to_diamond(int xcomp, int ycomp, int zcomp, int x, int y, int z);
+void get_neighbors_by_key(int retval[5], int key);
 Position get_neighbour_pos(int distance, int coord_dif[3]);
 world_stct * world_update_state(world_stct * world);
 #endif
