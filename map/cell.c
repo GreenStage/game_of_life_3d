@@ -3,32 +3,17 @@
 #include <string.h>
 #include "cell.h"
 
-cell_stct * insert_new_cell( cell_stct * ptr, int x , int y, int z){
-
-  cell_stct *new_cell = (cell_stct*) malloc(sizeof(cell_stct));
-  memset(new_cell,0,sizeof(cell_stct));
-
-  new_cell->x = x;
-  new_cell->y = y;
-  new_cell->z = z;
-  new_cell->state = alive;
-  new_cell->next_state = undefined;
-  new_cell->next = ptr;
-
-  return new_cell;
-}
-
-State cell_get_next_state(State current_state,int neighbors){
-  if( current_state == alive && neighbors >= 2 && neighbors <= 4){
+State cell_get_next_state(State current_state, int neighbours){
+  if( current_state == alive && neighbours >= 2 && neighbours <= 4){
     return alive;
   }
-  else if( current_state == dead && (neighbors == 2 || neighbors == 3) ){
+  else if( current_state == dead && (neighbours == 2 || neighbours == 3) ){
     return alive;
   }
   else return dead;
 }
 
-void get_neighbors_by_key(int retval[5], int key){
+void get_neighbours_by_key(int retval[5], int key){
 
   switch(key){
     case 0: /*Front*/
@@ -57,11 +42,14 @@ void get_neighbors_by_key(int retval[5], int key){
       break;
 
     case 5:
-    default:
        retval[0]=4; retval[1]=5; retval[2]=6;
        retval[3]=7; retval[4]=17;
       break;
+    default:
+      printf("get_neighbours_by_key ERROR\n\n");
+      break;
 
   }
+
   return;
 }

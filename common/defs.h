@@ -1,14 +1,13 @@
 #ifndef DEFS_HEADER
 #define DEFS_HEADER
 
-#define DEBUG
 
 typedef enum position {
   NONE  = 0,
-  FRONT = 0b000000000001, /*1*/ 
+  FRONT = 0b000000000001, /*1*/
   BACK  = 0b000000000100, /*4*/
   RIGHT = 0b000000010000, /*16*/
-  LEFT  = 0b000001000000, /*54*/
+  LEFT  = 0b000001000000, /*64*/
   UP    = 0b000100000000, /*256*/
   DOWN  = 0b010000000000, /*1024*/
 

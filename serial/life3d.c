@@ -15,6 +15,7 @@ int main(int argc, char * argv[]){
   char line[MAX_LINE_SIZE];
   FILE * inputFile;
   world_stct *world;
+  cell_stct *aux;
 
   if(argc < 3){
     error_exit("Error: Missing argument",ERR_MISSING_ARG);
@@ -44,17 +45,26 @@ int main(int argc, char * argv[]){
     if (!sscanf(line,"%d %d %d", &x,&y,&z))
       error_exit("Error: Invalid position",ERR_INVALID_POS);
 
-    world->cell_list = insert_new_cell(world->cell_list,x,y,z);
+    world->cell_list = insert_new_cell(world->cell_list, alive, x, y, z);
   }
 
-#ifndef DEBUG
+  world_map(world->cell_list, 0); /*First time neighbour mapping no cells will be removed; return value ignored*/
+
+  for(i = 0; i < generations; i++){
+    world->cell_list = next_world_gen(world->cell_list);
+    world->cell_list = world_map(world->cell_list, 0);
+    if(world->cell_list == NULL){
+      printf("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\nEntire population died in generation %d! You suck\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n", i+1);
+      break;
+    }
+  }
+
   cell_stct *auxx;
-  for(auxx = world->cell_list; auxx != NULL; auxx = auxx->next)
-    printf("%d %d %d\n", auxx->x, auxx->y, auxx->z);
-#endif
+  if(world->cell_list != NULL)
+    for(auxx = world->cell_list; auxx != NULL; auxx = auxx->next)
+        printf("FINAL %d %d %d\n", auxx->x, auxx->y, auxx->z);
 
-
-  world_map(world->cell_list);
   clear_map(world->cell_list);
+
   return 0;
 }
