@@ -93,12 +93,11 @@ world_stct * world_map(world_stct * world){
           cell_add_first_neighbor(aux1,i,cell_list);
 
           for(k = 0; k < 5; k++){
-			v = get_relative_neighbor(i,neighbor_neigh[k]);
             if(( cell_exists((aux = cell_get_second_neighbor(aux1, neighbor_neigh[k])) ) ) && cell_get_state(aux) == alive ){
-              //printf("STATE: %d\n",cell_get_state(aux));
-			  v = cell_get_relative_to_neighbor(cell_get_relative_by_index(i), cell_get_relative_by_index(neighbor_neigh[k]));
+			  v = cell_get_relative_to_neighbor(cell_get_relative_by_index(i), cell_get_relative_by_index(neighbor_neigh[k] + 6));
 			  index = cell_get_index_by_relative(v);
               cell_add_first_neighbor(aux, index ,cell_list);
+
             }
           }
 

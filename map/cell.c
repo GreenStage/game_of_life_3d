@@ -102,9 +102,22 @@ int cell_get_index_by_relative(relative_position pos) {
 }
 relative_position cell_get_relative_to_neighbor(relative_position pos_to_cell, relative_position pos_to_neighbor){
 	relative_position retval;
-	retval = pos_to_neighbor && (~pos_to_cell);
-	if (retval == RIGHT || retval == FRONT || revtal == UP) revtal <<= 2;
-	else (retval == LEFT || retval == BACK || revtal == DOWN) revtal >>= 2;
+
+
+	if (pos_to_neighbor % 3 == 0) { /*F2,B2,R2,L2,U2,D2*/
+		if (pos_to_neighbor == F2)		return BACK;
+		else if (pos_to_neighbor == B2) return FRONT;
+		else if (pos_to_neighbor == R2) return LEFT;
+		else if (pos_to_neighbor == L2) return RIGHT;
+		else if (pos_to_neighbor == U2) return DOWN;
+		else if (pos_to_neighbor == D2) return UP;
+	}
+
+	else {
+		retval = pos_to_neighbor ^ pos_to_cell;
+	}
+	if (retval == RIGHT || retval == FRONT || retval == UP) retval <<= 2;
+	else if(retval == LEFT || retval == BACK || retval == DOWN) retval >>= 2;
 	else retval = NONE;
 	return retval;
 }
@@ -252,11 +265,11 @@ int  cell_get_diamond_index(cell_ptr cell1, cell_ptr ref, int map_size,mirror ne
 	else if (coord_dif[0] == 1 && coord_dif[1] == 0 && coord_dif[2] == 1) retval	= 20;
 	else if (coord_dif[0] == -1 && coord_dif[1] == 0 && coord_dif[2] == -1) retval	= 21;
 	else if (coord_dif[0] == -1 && coord_dif[1] == 0 && coord_dif[2] == 1) retval	= 22;
-	else	(coord_dif[0] == 1 && coord_dif[1] == 0 && coord_dif[2] == -1) retval	= 23;
-	
+	else if	(coord_dif[0] == 1 && coord_dif[1] == 0 && coord_dif[2] == -1) retval	= 23;
+	else retval = -1;
 	return retval;
 }
-
+/*
 
 relative_position  cell_get_relative_to_neighbor(cell_ptr cell1, cell_ptr ref, int map_size, mirror near_border) {
 	int distance, is_negative = 0, i;
@@ -301,7 +314,7 @@ relative_position  cell_get_relative_to_neighbor(cell_ptr cell1, cell_ptr ref, i
 
 	return retval;
 }
-
+*/
 pos_ cell_get_absolute_pos(cell_ptr cell, int relative_position, int max_pos){
 
   pos_ retval = cell->pos;
@@ -346,7 +359,7 @@ int cell_set_neighbors(cell_ptr cell1, cell_ptr cell2,int index){
   int first_neighbors_ctr = 0;
 
   #ifdef DEBUG
-      if(index == 24)  printf("ERROR NOW: Cell (%d,%d,%d) is <%d> of cell (%d,%d,%d)\n",cell2->pos.x,cell2->pos.y,cell2->pos.z,pos,cell1->pos.x,cell1->pos.y,cell1->pos.z);
+      printf("Cell (%d,%d,%d) is on index <%d> of cell (%d,%d,%d)\n",cell2->pos.x,cell2->pos.y,cell2->pos.z,index,cell1->pos.x,cell1->pos.y,cell1->pos.z);
   #endif
   if(index < 6){
     cell1->first_neighbors[index] = cell2;
@@ -359,9 +372,7 @@ int cell_set_neighbors(cell_ptr cell1, cell_ptr cell2,int index){
     cell2->second_neighbors[(index % 2 == 0) ? index + 1 : index - 1] = cell1;
   }
 
-#ifdef DEBUG
-        if( pos != 0) printf("Cell (%d,%d,%d) is <%d> of cell (%d,%d,%d)\n",cell2->pos.x,cell2->pos.y,cell2->pos.z,pos,cell1->pos.x,cell1->pos.y,cell1->pos.z);
-#endif
+
   return first_neighbors_ctr;
 }
 
