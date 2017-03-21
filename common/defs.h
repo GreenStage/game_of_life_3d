@@ -3,8 +3,17 @@
 
 #define DEBUG
 
-typedef enum bool_ {false,true} bool;
-typedef enum position {
+typedef enum bool_ {false = 0,true} bool;
+typedef enum mirror_{
+  near_none = 0x0,
+  near_x0 = 0x1,
+  near_xmax = 0x2,
+  near_y0 = 0x4,
+  near_ymax = 0x8,
+  near_z0 = 0x10,
+  near_zmax = 0x20
+} mirror;
+typedef enum rel_position {
   NONE  = 0,
   FRONT = 0b000000000001, /*1*/
   BACK  = 0b000000000100, /*4*/
@@ -15,28 +24,33 @@ typedef enum position {
 
   F2    = 0b000000000011, /*3*/
   B2    = 0b000000001100, /*12*/
-
   R2    = 0b000000110000, /*48*/
   L2    = 0b000011000000, /*192*/
-
   U2    = 0b001100000000, /*768*/
   D2    = 0b110000000000, /*3072*/
 
-  U1_L1 = UP    | LEFT,
-  U1_R1 = UP    | RIGHT,
-  U1_F1 = UP    | FRONT, /*257*/
-  U1_B1 = UP    | BACK,
-  D1_L1 = DOWN  | LEFT,
-  D1_R1 = DOWN  | RIGHT,
-  D1_F1 = DOWN  | FRONT,
-  D1_B1 = DOWN  | BACK,
-  B1_L1 = BACK  | LEFT,
-  B1_R1 = BACK  | RIGHT,
   F1_L1 = FRONT | LEFT,
-  F1_R1 = FRONT | RIGHT
-}Position;
+  B1_R1 = BACK  | RIGHT,
+
+  F1_R1 = FRONT | RIGHT,
+  B1_L1 = BACK  | LEFT,
+
+  U1_L1 = UP    | LEFT,
+  D1_R1 = DOWN  | RIGHT,
+
+  U1_R1 = UP    | RIGHT,
+  D1_L1 = DOWN  | LEFT,
+
+  U1_F1 = UP    | FRONT, /*257*/
+  D1_B1 = DOWN  | BACK,
+
+  U1_B1 = UP    | BACK,
+  D1_F1 = DOWN  | FRONT
+}relative_position;
 
 #define MAX_LINE_SIZE 200
+#define ABSOLUTE(Y) ( (Y)  < (0) ? (-Y) : (Y) )
+#define min_abs(A,B) ( (ABSOLUTE(A) < ABSOLUTE(B)) ? (A) : (B) )
 
 /* define Windows */
 #endif

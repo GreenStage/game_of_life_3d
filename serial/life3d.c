@@ -43,8 +43,8 @@ int main(int argc, char * argv[]){
   for(i=0; fgets(line,MAX_LINE_SIZE,inputFile) ;i++){
     if (!sscanf(line,"%d %d %d", &pos.x,&pos.y,&pos.z))
       error_exit("Error: Invalid position",ERR_INVALID_POS);
-
-    world->cell_list = insert_new_cell(world->cell_list,pos);
+    world->cell_list = insert_new_cell(world->cell_list,pos,cube_size -1);
+    cell_update_state(world->cell_list);
   }
 
   world = world_map(world);

@@ -16,6 +16,5 @@ world_stct * init_world( int size);
 
 world_stct * world_map(world_stct * world);
 void get_neighbors_by_key(int retval[5], int key);
-Position get_neighbour_pos(int distance, int coord_dif[3]);
 world_stct * world_update_state(world_stct * world);
 #endif

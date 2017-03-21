@@ -2,26 +2,32 @@
 #include <stdio.h>
 #include <string.h>
 #include "cell.h"
-
-typedef enum state {dead, alive, undefined} State;
-typedef struct _pos_ { int x,y,z;} pos_;
+#include "../common/error.h"
 
 struct cell_{
   pos_ pos;
-  struct cell_ *first_neighbors[6]; /*INDEX ORDER -> FRONT, BACK, RIGHT, LEFT, UP, DOWN*/
-  struct cell_ *second_neighbors[18]; /*INDEX ORDER -> U1_L1, U1_R1, U1_F1, U1_B1, D1_L1, D1_R1, D1_F1, D1_B1, B1_L1, B1_R1, F1_L1, F1_R1*/
+  mirror near_border;
+  struct cell_ * first_neighbors[6]; /*INDEX ORDER -> FRONT, BACK, RIGHT, LEFT, UP, DOWN*/
+  struct cell_ * second_neighbors[18]; /*INDEX ORDER -> F2, B2, R2, L2, U2, D2,
+                                      F1_L1,B1_R1,F1_R1,B1_L1,U1_L1,D1_R1,U1_R1,D1_L1,U1_F1,D1_B1,U1_B1,D1_F1*/
   State state;
   State next_state;
   struct cell_ * next;
 };
 
-bool cell_exists(cell_ptr ptr) {  return (ptr)? true : false; }
-
+/*static const enum relative_position Position_map[18] = { FRONT2, BACK2, RIGHT2, LEFT2, UP2, DOWN2,
+                                      F1_L1,B1_R1,F1_R1,B1_L1,U1_L1,D1_R1,U1_R1,D1_L1,U1_F1,D1_B1,U1_B1,D1_F1};*/
+void cell_getz(cell_ptr ptr){
+  printf ("Z == %d\n", ptr->pos.z);
+}
+bool cell_exists(cell_ptr ptr) {  return (ptr != NULL)? 1 : 0; }
+mirror cell_get_near_border(cell_ptr cell) { return cell->near_border;}
 cell_ptr cell_get_next(cell_ptr cell) { return cell->next; }
-cell_ptr cell_get_next_state(cell_ptr cell) { return cell->next_state; }
+State cell_get_state(cell_ptr cell) { return cell->state; }
+State cell_get_next_state(cell_ptr cell) { return cell->next_state; }
 cell_ptr cell_get_first_neighbor(cell_ptr cell, int i) { return cell->first_neighbors[i]; }
 cell_ptr cell_get_second_neighbor(cell_ptr cell, int i) { return cell->second_neighbors[i]; }
-
+mirror cell_is_near_border(cell_ptr cell) { return cell->near_border;}
 void cell_add_first_neighbor(cell_ptr cell, int i, cell_ptr neigh){  cell->first_neighbors[i] = neigh; }
 
 void cell_update_state(cell_ptr cell) {
@@ -30,18 +36,36 @@ void cell_update_state(cell_ptr cell) {
 }
 
 
-cell_ptr insert_new_cell( cell_ptr ptr, pos_ pos){
+cell_ptr insert_new_cell( cell_ptr ptr, pos_ pos, int max_pos){
+  mirror near_border = near_none;
 
-  cell_ptrnew_cell = (cell_stct*) malloc(sizeof(cell_stct));
-  memset(new_cell,0,sizeof(cell_stct));
-
+  cell_ptr new_cell = (cell_ptr) malloc(sizeof( struct cell_));
+  memset(new_cell,0,sizeof(struct cell_));
+  memset(new_cell->first_neighbors,0,sizeof(struct cell_ *) * 6);
+  memset(new_cell->second_neighbors,0,sizeof(struct cell_ *) * 18);
   new_cell->pos.x = pos.x;
   new_cell->pos.y = pos.y;
   new_cell->pos.z = pos.z;
-  new_cell->state = alive;
+  new_cell->state = dead;
   new_cell->next_state = alive;
   new_cell->next = ptr;
 
+  if( max_pos - pos.x < 2 )
+    near_border |= near_xmax;
+  if( pos.x < 2 )
+    near_border |= near_x0;
+
+  if( max_pos - pos.y < 2 )
+    near_border |= near_ymax;
+  if( pos.y < 2 )
+    near_border |= near_y0;
+
+  if( max_pos - pos.z < 2 )
+    near_border |= near_zmax;
+  if( pos.z < 2 )
+    near_border |= near_z0;
+
+  new_cell->near_border = near_border;
   return new_cell;
 }
 
@@ -52,6 +76,7 @@ cell_ptr cell_remove_next(cell_ptr prev,cell_ptr cell){
   return aux ;
 }
 
+
 bool cell_will_spawn(int neighbors){
   if( neighbors == 2 || neighbors == 3 ){
     return true;
@@ -60,11 +85,10 @@ bool cell_will_spawn(int neighbors){
 }
 
 void cell_find_next_state(cell_ptr cell,int neighbors){
-  State current_state = cell_ptr->state;
   if(neighbors >= 2 && neighbors <= 4){
-    cell_ptr->next_state = alive;
+    cell->next_state = alive;
   }
-  else cell_ptr->next_state = dead;
+  else cell->next_state = dead;
 
 #ifdef DEBUG
     printf("Cell (%d,%d,%d) next state is %d\n",cell->pos.x,cell->pos.y,cell->pos.z,cell->next_state);
@@ -72,185 +96,233 @@ void cell_find_next_state(cell_ptr cell,int neighbors){
 
 }
 
-Position cell_belongs_to_diamond(cell_ptr cell, cell_ptr center){
-  int distance;
-  Position pos = NONE;
-  int coord_dif[3] = {cell->pos.x - center->pos.x, cell->pos.y - center->pos.y, cell->pos.z - center->pos.z};
+int cell_get_coord_dif(int a, int b, int size, int type){
+  switch(type){
+    case 1:
+      return size + a - b;
+      break;
 
-  if((distance = abs(coord_dif[0]) + abs(coord_dif[1]) + abs(coord_dif[2])) == 1 || distance == 2)
-    pos = get_neighbour_pos(distance, coord_dif);
-  else
-    pos = NONE;
+    case 2:
+      return a - size - b;
+      break;
 
-  return pos;
+    default:
+      return a - b;
+      break;
+  }
 }
 
-pos_ get_absolute(cell_ptr cell, int relative_position){
+relative_position  cell_get_relative_position(cell_ptr cell1, cell_ptr ref, int map_size,mirror near_border){
+  int distance,is_negative = 0, i;
+  relative_position  retval = NONE;
+  int coord_dif[3] =  { cell_get_coord_dif(cell1->pos.x, ref->pos.x,map_size, 0),
+                        cell_get_coord_dif(cell1->pos.y, ref->pos.y,map_size, 0),
+                        cell_get_coord_dif(cell1->pos.z, ref->pos.z,map_size, 0)};
+
+
+  if(near_border == near_x0) coord_dif[0]        = cell_get_coord_dif(cell1->pos.x, ref->pos.x,map_size,1);
+  else if(near_border == near_xmax) coord_dif[0] = cell_get_coord_dif(cell1->pos.x, ref->pos.x,map_size,2);
+
+  else if(near_border == near_y0) coord_dif[1]   = cell_get_coord_dif(cell1->pos.y, ref->pos.y,map_size,1);
+  else if(near_border == near_ymax) coord_dif[1] = cell_get_coord_dif(cell1->pos.y, ref->pos.y,map_size,2);
+
+  else if(near_border == near_z0) coord_dif[2]   = cell_get_coord_dif(cell1->pos.z, ref->pos.z,map_size,1);
+  else if(near_border == near_zmax) coord_dif[2] = cell_get_coord_dif(cell1->pos.z, ref->pos.z,map_size,2);
+
+  else ;
+
+  if((distance = abs(coord_dif[0]) + abs(coord_dif[1]) + abs(coord_dif[2])) != 1 && distance != 2)
+    return retval;
+
+#ifdef DEBUG
+  printf("coord_dif : [%d,%d,%d]\n ",coord_dif[0],coord_dif[1],coord_dif[2]);
+#endif
+
+  for(i = 0; i< 3; i++){
+    is_negative = (coord_dif[i] < 0) ? 2 : 0;
+
+    if(coord_dif[i] == 2 || coord_dif[i] == -2){
+      retval = (0b11 << (i * 4 + is_negative));
+      break;
+    }
+    else if(coord_dif[i] == 1 || coord_dif[i] == -1){
+      retval = retval | (0b01 << (i * 4 + is_negative));
+      if(distance == 1)
+        break;
+    }
+    else continue;
+  }
+
+  return retval;
+}
+
+pos_ cell_get_absolute_pos(cell_ptr cell, int relative_position, int max_pos){
+
   pos_ retval = cell->pos;
+
   switch(relative_position){
     case 0:
       retval.x ++;
+      if(retval.x > max_pos)
+        retval.x = 0;
       break;
     case 1:
       retval.x --;
+      if(retval.x == -1)
+        retval.x = max_pos;
       break;
     case 2:
       retval.y ++;
+      if(retval.y > max_pos)
+        retval.y = 0;
       break;
     case 3:
       retval.y --;
+      if(retval.y == -1)
+        retval.y = max_pos;
       break;
     case 4:
       retval.z ++;
+      if(retval.z > max_pos)
+        retval.z = 0;
       break;
     case 5:
       retval.z --;
+      if(retval.z == -1)
+        retval.z = max_pos;
       break;
     default:
       break;
   }
   return retval;
 }
-
-int cell_set_neighbors(cell_ptr cell1, cell_ptr cell,Position pos){
-  int first_neighbors_ctr = 0;
+int cell_get_index_by_pos(relative_position pos){
   switch(pos){
     case NONE:
+      return -1;
       break;
 
     case FRONT:
-      first_neighbors_ctr++;
-      cell1->first_neighbors[0] = cell2;
-      cell2->first_neighbors[1] = cell1;
+      return 0;
       break;
 
     case BACK:
-      first_neighbors_ctr++;
-      cell1->first_neighbors[1] = cell2;
-      cell2->first_neighbors[0] = cell1;
+      return 1;
       break;
 
     case RIGHT:
-      first_neighbors_ctr++;
-      cell1->first_neighbors[2] = cell2;
-      cell2->first_neighbors[3] = cell1;
+      return 2;
       break;
 
     case LEFT:
-      first_neighbors_ctr++;
-      cell1->first_neighbors[3] = cell2;
-      cell2->first_neighbors[2] = cell1;
+      return 3;
       break;
 
     case UP:
-      first_neighbors_ctr++;
-      cell1->first_neighbors[4] = cell2;
-      cell2->first_neighbors[5] = cell1;
+      return 4;
       break;
 
     case DOWN:
-      first_neighbors_ctr++;
-      cell1->first_neighbors[5] = cell2;
-      cell2->first_neighbors[4] = cell1;
-      break;
-
-    case U1_L1:
-      cell1->second_neighbors[0] = cell2;
-      cell2->second_neighbors[1] = cell1;
-      break;
-
-    case U1_R1:
-      cell1->second_neighbors[1] = cell2;
-      cell2->second_neighbors[0] = cell1;
-      break;
-
-    case U1_F1:
-      cell1->second_neighbors[2] = cell2;
-      cell2->second_neighbors[3] = cell1;
-      break;
-
-    case U1_B1:
-      cell1->second_neighbors[3] = cell2;
-      cell2->second_neighbors[2] = cell1;
-      break;
-
-    case D1_L1:
-      cell1->second_neighbors[4] = cell2;
-      cell2->second_neighbors[5] = cell1;
-      break;
-
-    case D1_R1:
-      cell1->second_neighbors[5] = cell2;
-      cell2->second_neighbors[4] = cell1;
-      break;
-
-    case D1_F1:
-      cell1->second_neighbors[6] = cell2;
-      cell2->second_neighbors[7] = cell1;
-      break;
-
-    case D1_B1:
-      cell1->second_neighbors[7] = cell2;
-      cell2->second_neighbors[6] = cell1;
-      break;
-
-    case B1_L1:
-      cell1->second_neighbors[8] = cell2;
-      cell2->second_neighbors[9] = cell1;
-      break;
-
-    case B1_R1:
-      cell1->second_neighbors[9] = cell2;
-      cell2->second_neighbors[8] = cell1;
-      break;
-
-
-    case F1_L1:
-      cell1->second_neighbors[10] = cell2;
-      cell2->second_neighbors[11] = cell1;
-      break;
-
-    case F1_R1:
-      cell1->second_neighbors[11] = cell2;
-      cell2->second_neighbors[10] = cell1;
+      return 5;
       break;
 
     case F2:
-      cell1->second_neighbors[12] = cell2;
-      cell2->second_neighbors[13] = cell1;
+      return 6;
       break;
 
     case B2:
-      cell1->second_neighbors[13] = cell2;
-      cell2->second_neighbors[12] = cell1;
+      return 7;
       break;
 
     case R2:
-      cell1->second_neighbors[14] = cell2;
-      cell2->second_neighbors[15] = cell1;
+      return 8;
       break;
 
     case L2:
-      cell1->second_neighbors[15] = cell2;
-      cell2->second_neighbors[14] = cell1;
+      return 9;
       break;
 
     case U2:
-      cell1->second_neighbors[16] = cell2;
-      cell2->second_neighbors[17] = cell1;
+      return 10;
       break;
+
     case D2:
-      cell1->second_neighbors[17] = cell2;
-      cell2->second_neighbors[16] = cell1;
+      return 11;
+      break;
+
+    case F1_L1:
+      return 12;
+      break;
+
+    case B1_R1:
+      return 13;
+      break;
+
+    case F1_R1:
+      return 14;
+      break;
+
+
+    case B1_L1:
+      return 15;
+      break;
+
+    case U1_L1:
+      return 16;
+      break;
+
+    case D1_R1:
+      return 17;
+      break;
+
+    case U1_R1:
+      return 18;
+      break;
+
+    case D1_L1:
+      return 19;
+      break;
+
+    case U1_F1:
+      return 20;
+      break;
+
+    case D1_B1:
+      return 21;
+      break;
+
+    case U1_B1:
+      return 22;
+      break;
+
+    case D1_F1:
+      return 23;
       break;
 
     default:
-#ifdef DEBUG
-      printf("ERROR NOW: Cell (%d,%d,%d) is <%d> of cell (%d,%d,%d)\n",cell2->pos.x,cell2->pos.y,cell2->pos.z,pos,cell1->pos.x,cell1->pos.y,cell1->pos.z);
-#endif
-      error_exit("Error: Invalid Position when building World ()", 18);
+      return -1;
       break;
   }
+}
+int cell_set_neighbors(cell_ptr cell1, cell_ptr cell2,relative_position pos){
+  int first_neighbors_ctr = 0;
+  int index;
+  index = cell_get_index_by_pos(pos);
+
+  #ifdef DEBUG
+      if(index == 24)  printf("ERROR NOW: Cell (%d,%d,%d) is <%d> of cell (%d,%d,%d)\n",cell2->pos.x,cell2->pos.y,cell2->pos.z,pos,cell1->pos.x,cell1->pos.y,cell1->pos.z);
+  #endif
+  if(pos == FRONT || pos == BACK || pos == UP || pos == DOWN || pos == LEFT || pos == RIGHT){
+    cell1->first_neighbors[index] = cell2;
+    cell2->first_neighbors[(index % 2 == 0) ? index + 1 : index - 1] = cell1;
+    first_neighbors_ctr++;
+  }
+  else{
+    index = index - 6;
+    cell1->second_neighbors[index] = cell2;
+    cell2->second_neighbors[(index % 2 == 0) ? index + 1 : index - 1] = cell1;
+  }
+
 #ifdef DEBUG
         if( pos != 0) printf("Cell (%d,%d,%d) is <%d> of cell (%d,%d,%d)\n",cell2->pos.x,cell2->pos.y,cell2->pos.z,pos,cell1->pos.x,cell1->pos.y,cell1->pos.z);
 #endif
@@ -266,6 +338,6 @@ void cell_list_print(cell_ptr ptr){
 }
 
 void cell_will_spawn_alert(cell_ptr ptr){
-  printf("Cell will spawn at (%d,%d,%d)",ptr->pos.x,ptr->pos.y,ptr->pos.z);
+  printf("Cell will spawn at (%d,%d,%d)\n",ptr->pos.x,ptr->pos.y,ptr->pos.z);
 }
 #endif /*DEBUG*/
