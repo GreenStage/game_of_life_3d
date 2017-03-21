@@ -13,10 +13,11 @@ world_stct * init_world( int size){
 }
 
 world_stct * world_map(world_stct * world){
+
   int size = world->size;
   cell_ptr cell_list = world->cell_list;
   cell_ptr aux;
-  int first_neighbors_ctr, i, j, k;
+  int first_neighbors_ctr, i, j, k, index;
   int neighbor_neigh[6], count_n_neigh;
   cell_ptr aux1, aux2;
   relative_position  pos;
@@ -38,45 +39,44 @@ world_stct * world_map(world_stct * world){
 
     for( aux2 = cell_get_next(aux1); aux2 != NULL; aux2 = cell_get_next(aux2) ){
       border = cell_get_near_border(aux2);
-      if ( NONE !=  ( pos = cell_get_relative_position(aux2, aux1,world->size,near_none) ) )
-        first_neighbors_ctr += cell_set_neighbors(aux1,aux2,pos);
+      if ( -1  != (index = cell_get_diamond_index(aux2, aux1,world->size,near_none) ) )
+        first_neighbors_ctr += cell_set_neighbors(aux1,aux2,index);
 
       if( border & near_x0 ){
-        if( NONE !=  ( pos = cell_get_relative_position(aux2, aux1,world->size,near_x0) ) )
-          first_neighbors_ctr += cell_set_neighbors(aux1,aux2,pos);
+        if( -1  != (index = cell_get_diamond_index(aux2, aux1,world->size,near_x0) ) )
+          first_neighbors_ctr += cell_set_neighbors(aux1,aux2,index);
       }
 
       if( border & near_y0 ){
-        if( NONE !=  ( pos = cell_get_relative_position(aux2, aux1,world->size,near_y0) ) )
-          first_neighbors_ctr += cell_set_neighbors(aux1,aux2,pos);
+        if( -1  != (index = cell_get_diamond_index(aux2, aux1,world->size,near_y0) ) )
+          first_neighbors_ctr += cell_set_neighbors(aux1,aux2,index);
       }
 
       if( border & near_z0 ){
-        if( NONE !=  ( pos = cell_get_relative_position(aux2, aux1,world->size,near_z0) ) )
-          first_neighbors_ctr += cell_set_neighbors(aux1,aux2,pos);
+        if( -1  != (index = cell_get_diamond_index(aux2, aux1,world->size,near_z0) ) )
+          first_neighbors_ctr += cell_set_neighbors(aux1,aux2,index);
       }
 
       if( border & near_xmax ){
-        if( NONE !=  ( pos = cell_get_relative_position(aux2, aux1,world->size,near_xmax) ) )
-          first_neighbors_ctr += cell_set_neighbors(aux1,aux2,pos);
+        if( -1  != (index = cell_get_diamond_index(aux2, aux1,world->size,near_xmax) ) )
+          first_neighbors_ctr += cell_set_neighbors(aux1,aux2,index);
       }
 
       if( border & near_ymax ){
-        if( NONE !=  ( pos = cell_get_relative_position(aux2, aux1,world->size,near_ymax) ) )
-          first_neighbors_ctr += cell_set_neighbors(aux1,aux2,pos);
+        if( -1  != (index = cell_get_diamond_index(aux2, aux1,world->size,near_ymax) ) )
+          first_neighbors_ctr += cell_set_neighbors(aux1,aux2,index);
       }
 
       if( border & near_zmax ){
-        if( NONE !=  ( pos = cell_get_relative_position(aux2, aux1,world->size,near_zmax) ) )
-          first_neighbors_ctr += cell_set_neighbors(aux1,aux2,pos);
+        if( -1  != (index = cell_get_diamond_index(aux2, aux1,world->size,near_zmax) ) )
+          first_neighbors_ctr += cell_set_neighbors(aux1,aux2,index);
       }
 
     }
 
     cell_find_next_state(aux1,first_neighbors_ctr);
-
     for( i=0 ; i < 6 ; i++ ){ /*Dead neighbor should be born?*/
-
+	  border = near_xmax << (i);
       count_n_neigh=1;
 
       if( !cell_exists( cell_get_first_neighbor(aux1,i) ) ){
@@ -87,17 +87,18 @@ world_stct * world_map(world_stct * world){
             count_n_neigh++;
         }
         if( cell_will_spawn(count_n_neigh) ){
+			int v,a,l;
           pos_aux = cell_get_absolute_pos(aux1,i,world->size - 1);
           cell_list = insert_new_cell(cell_list,pos_aux,world->size - 1) ;
           cell_add_first_neighbor(aux1,i,cell_list);
 
           for(k = 0; k < 5; k++){
-
+			v = get_relative_neighbor(i,neighbor_neigh[k]);
             if(( cell_exists((aux = cell_get_second_neighbor(aux1, neighbor_neigh[k])) ) ) && cell_get_state(aux) == alive ){
               //printf("STATE: %d\n",cell_get_state(aux));
-              printf("index: %d\n",cell_get_relative_position(cell_list,aux,world->size,cell_get_near_border(cell_list) ));
-
-              cell_add_first_neighbor(aux, cell_get_index_by_pos( cell_get_relative_position(cell_list,aux,world->size, cell_get_near_border(cell_list)) ) ,cell_list);
+			  v = cell_get_relative_to_neighbor(cell_get_relative_by_index(i), cell_get_relative_by_index(neighbor_neigh[k]));
+			  index = cell_get_index_by_relative(v);
+              cell_add_first_neighbor(aux, index ,cell_list);
             }
           }
 

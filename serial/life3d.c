@@ -52,5 +52,6 @@ int main(int argc, char * argv[]){
 #ifdef DEBUG
   cell_list_print(world->cell_list);
 #endif
+  getchar();
   return 0;
 }

@@ -19,9 +19,12 @@ bool cell_exists(cell_ptr ptr);
 bool cell_will_spawn(int neighbors);
 
 /*FETCHING FUNCTIONS*/
+relative_position cell_get_relative_by_index(int index);
+relative_position cell_get_relative_to_neighbor(relative_position pos_to_cell, relative_position pos_to_neighbor);
+int cell_get_index_by_relative(relative_position pos);
 mirror cell_get_near_border(cell_ptr cell);
 relative_position  cell_get_neighbour_pos(int distance, int coord_dif[3]);
-relative_position  cell_get_relative_position(cell_ptr cell1, cell_ptr ref, int map_size,mirror near_border);
+int  cell_get_diamond_index(cell_ptr cell1, cell_ptr ref, int map_size, mirror near_border);
 int cell_get_index_by_pos(relative_position pos);
 cell_ptr cell_get_next(cell_ptr cell);
 State cell_get_state(cell_ptr cell);
