@@ -3,7 +3,7 @@
 #include <string.h>
 #include "world.h"
 #include "../common/error.h"
-
+/*N PRECISAS GUARDAR SEGUNDOS VIZINHOS*/
 world_stct * init_world( int size){
   world_stct * new_world = (world_stct* ) malloc(sizeof(world_stct));
   new_world->size = size;
@@ -13,7 +13,7 @@ world_stct * init_world( int size){
 }
 
 world_stct * world_map(world_stct * world){
-
+  int a;
   int size = world->size;
   cell_ptr cell_list = world->cell_list;
   cell_ptr aux;
@@ -27,7 +27,7 @@ world_stct * world_map(world_stct * world){
   int counter = 0;
 #endif
 
-  for( aux1 = cell_list; aux1 != NULL; aux1 = cell_get_next(aux1) ){
+  for( a = 0, aux1 = cell_list; aux1 != NULL; aux1 = cell_get_next(aux1) , a++ ){
     if(cell_get_state(aux1) != alive)
       continue;
 
@@ -37,7 +37,7 @@ world_stct * world_map(world_stct * world){
       counter++;
 #endif
 
-    for( aux2 = cell_get_next(aux1); aux2 != NULL; aux2 = cell_get_next(aux2) ){
+    for(aux2 = cell_get_next(aux1); aux2 != NULL; aux2 = cell_get_next(aux2) ){
       border = cell_get_near_border(aux2);
       if ( -1  != (index = cell_get_diamond_index(aux2, aux1,world->size,near_none) ) )
         first_neighbors_ctr += cell_set_neighbors(aux1,aux2,index);
@@ -76,14 +76,15 @@ world_stct * world_map(world_stct * world){
 
     cell_find_next_state(aux1,first_neighbors_ctr);
     for( i=0 ; i < 6 ; i++ ){ /*Dead neighbor should be born?*/
-	  border = near_xmax << (i);
+	     border = near_xmax << (i);
       count_n_neigh=1;
 
       if( !cell_exists( cell_get_first_neighbor(aux1,i) ) ){
         get_neighbors_by_key(neighbor_neigh,i);
 
         for(j = 0; j < 5; j++){
-          if(cell_exists( cell_get_second_neighbor(aux1, neighbor_neigh[j]) ) )
+          aux = cell_get_second_neighbor(aux1, neighbor_neigh[j]);
+          if(cell_exists( aux ) && cell_get_state(aux) == alive)
             count_n_neigh++;
         }
         if( cell_will_spawn(count_n_neigh) ){
@@ -94,8 +95,8 @@ world_stct * world_map(world_stct * world){
 
           for(k = 0; k < 5; k++){
             if(( cell_exists((aux = cell_get_second_neighbor(aux1, neighbor_neigh[k])) ) ) && cell_get_state(aux) == alive ){
-			  v = cell_get_relative_to_neighbor(cell_get_relative_by_index(i), cell_get_relative_by_index(neighbor_neigh[k] + 6));
-			  index = cell_get_index_by_relative(v);
+			        v = cell_get_relative_to_neighbor(cell_get_relative_by_index(i), cell_get_relative_by_index(neighbor_neigh[k] + 6));
+			        index = cell_get_index_by_relative(v);
               cell_add_first_neighbor(aux, index ,cell_list);
 
             }
@@ -107,7 +108,9 @@ world_stct * world_map(world_stct * world){
         }
       }
     }
+
   }
+      printf("num :%d\n",a);
   world->cell_list = cell_list;
   return world;
 }

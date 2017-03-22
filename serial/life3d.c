@@ -46,12 +46,17 @@ int main(int argc, char * argv[]){
     world->cell_list = insert_new_cell(world->cell_list,pos,cube_size -1);
     cell_update_state(world->cell_list);
   }
-
+  for(i = 0; i < generations;i++){
+    printf("%d\n",i);
+#ifdef DEBUG
+    printf("---- Generation %d: ----------\n",i);
+    cell_list_print(world->cell_list);
+    printf("\n");
+#endif
   world = world_map(world);
   world = world_update_state(world);
-#ifdef DEBUG
+  }
+  world->cell_list = cell_order(world->cell_list);
   cell_list_print(world->cell_list);
-#endif
-  getchar();
-  return 0;
+  exit(0);
 }

@@ -8,7 +8,7 @@
 typedef struct  cell_ * cell_ptr;
 typedef struct _pos_ { int x,y,z;} pos_;
 typedef enum state {dead, alive, undefined} State;
-
+cell_ptr cell_order(cell_ptr h);
 /*FUNCTIONS*/
 cell_ptr insert_new_cell( cell_ptr ptr, pos_ pos,int max_pos);
 cell_ptr cell_remove_next(cell_ptr prev,cell_ptr  cell);
@@ -35,16 +35,16 @@ cell_ptr cell_get_second_neighbor(cell_ptr cell, int i);
 /*UPDATING FUNCTIONS*/
 void cell_update_state(cell_ptr cell);
 void cell_find_next_state(cell_ptr cell,int neighbors);
-int cell_set_neighbors(cell_ptr cell1, cell_ptr cell,relative_position  pos);
+int cell_set_neighbors(cell_ptr cell1, cell_ptr cell2,int index);
 void cell_add_first_neighbor(cell_ptr cell, int i, cell_ptr neigh);
 
 pos_ cell_get_absolute_pos(cell_ptr cell, int relative_position, int max_pos);
 
-
+void cell_list_print(cell_ptr ptr);
+#define state_to_str(STATE) ( (STATE) == (0) ? ("Dead") : ("Alive") )
 /*DEBUGGING FUNCTIONS*/
 #ifdef DEBUG
-#define state_to_str(STATE) ( (STATE) == (0) ? ("Dead") : ("Alive") )
-void cell_list_print(cell_ptr ptr);
+
 void cell_will_spawn_alert(cell_ptr ptr);
 #endif /*DEBUG*/
 

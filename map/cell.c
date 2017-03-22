@@ -1,4 +1,4 @@
-#include <stdlib.h>
+  #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "cell.h"
@@ -15,7 +15,7 @@ struct cell_{
   struct cell_ * next;
 };
 
-static const enum relative_position position_map[24] = { FRONT,BACK,RIGHT,LEFT,UP,DOWN, F2, B2, R2, L2, U2, D2,
+static const relative_position position_map[24] = { FRONT,BACK,RIGHT,LEFT,UP,DOWN, F2, B2, R2, L2, U2, D2,
                                       F1_L1,B1_R1,F1_R1,B1_L1,U1_L1,D1_R1,U1_R1,D1_L1,U1_F1,D1_B1,U1_B1,D1_F1};
 
 relative_position cell_get_relative_by_index(int index) { return position_map[index]; }
@@ -101,7 +101,7 @@ int cell_get_index_by_relative(relative_position pos) {
 	}
 }
 relative_position cell_get_relative_to_neighbor(relative_position pos_to_cell, relative_position pos_to_neighbor){
-	relative_position retval;
+	relative_position retval = NONE;
 
 
 	if (pos_to_neighbor % 3 == 0) { /*F2,B2,R2,L2,U2,D2*/
@@ -269,52 +269,7 @@ int  cell_get_diamond_index(cell_ptr cell1, cell_ptr ref, int map_size,mirror ne
 	else retval = -1;
 	return retval;
 }
-/*
 
-relative_position  cell_get_relative_to_neighbor(cell_ptr cell1, cell_ptr ref, int map_size, mirror near_border) {
-	int distance, is_negative = 0, i;
-	relative_position  retval = NONE;
-	int coord_dif[3] = { cell_get_coord_dif(cell1->pos.x, ref->pos.x,map_size, 0),
-		cell_get_coord_dif(cell1->pos.y, ref->pos.y,map_size, 0),
-		cell_get_coord_dif(cell1->pos.z, ref->pos.z,map_size, 0) };
-
-
-	if (near_border == near_x0) coord_dif[0] = cell_get_coord_dif(cell1->pos.x, ref->pos.x, map_size, 1);
-	else if (near_border == near_xmax) coord_dif[0] = cell_get_coord_dif(cell1->pos.x, ref->pos.x, map_size, 2);
-
-	else if (near_border == near_y0) coord_dif[1] = cell_get_coord_dif(cell1->pos.y, ref->pos.y, map_size, 1);
-	else if (near_border == near_ymax) coord_dif[1] = cell_get_coord_dif(cell1->pos.y, ref->pos.y, map_size, 2);
-
-	else if (near_border == near_z0) coord_dif[2] = cell_get_coord_dif(cell1->pos.z, ref->pos.z, map_size, 1);
-	else if (near_border == near_zmax) coord_dif[2] = cell_get_coord_dif(cell1->pos.z, ref->pos.z, map_size, 2);
-
-	else;
-
-	if ((distance = abs(coord_dif[0]) + abs(coord_dif[1]) + abs(coord_dif[2])) != 1 && distance != 2)
-		return retval;
-
-#ifdef DEBUG
-	printf("coord_dif : [%d,%d,%d]\n ", coord_dif[0], coord_dif[1], coord_dif[2]);
-#endif
-
-	for (i = 0; i< 3; i++) {
-		is_negative = (coord_dif[i] < 0) ? 2 : 0;
-
-		if (coord_dif[i] == 2 || coord_dif[i] == -2) {
-			retval = (0b11 << (i * 4 + is_negative));
-			break;
-		}
-		else if (coord_dif[i] == 1 || coord_dif[i] == -1) {
-			retval = retval | (0b01 << (i * 4 + is_negative));
-			if (distance == 1)
-				break;
-		}
-		else continue;
-	}
-
-	return retval;
-}
-*/
 pos_ cell_get_absolute_pos(cell_ptr cell, int relative_position, int max_pos){
 
   pos_ retval = cell->pos;
@@ -375,14 +330,42 @@ int cell_set_neighbors(cell_ptr cell1, cell_ptr cell2,int index){
 
   return first_neighbors_ctr;
 }
-
-#ifdef DEBUG
 void cell_list_print(cell_ptr ptr){
   cell_ptr aux;
-  printf("____________________\n");
   for(aux = ptr; aux != NULL; aux = aux->next)
     printf("(%d,%d,%d) is %s\n", aux->pos.x,aux->pos.y,aux->pos.z,state_to_str(aux->state) );
 }
+void cell_switch(cell_ptr c1, cell_ptr c2){
+  struct cell_ aux;
+  cell_ptr aux_next1 = c1->next;
+  cell_ptr aux_next2 = c2->next;
+  memcpy(&aux,c1,sizeof(struct cell_));
+  memcpy(c1,c2,sizeof(struct cell_));
+  memcpy(c2,&aux,sizeof(struct cell_));
+
+  c1->next = aux_next1;
+  c2->next = aux_next2;
+}
+cell_ptr cell_order(cell_ptr h){
+  cell_ptr aux,aux1,aux2;
+  cell_ptr smaller;
+  for(aux = h; aux != NULL; aux = aux->next){
+
+    smaller = aux;
+    for(aux2 = aux->next; aux2 != NULL; aux2 = aux2->next ){
+      if(aux2->pos.x < smaller->pos.x) smaller = aux2;
+      else if (aux2->pos.x == smaller->pos.x){
+        if(aux2->pos.y < smaller->pos.y) smaller = aux2;
+        else if( aux2->pos.y == smaller->pos.y){
+          if( aux2->pos.z < smaller->pos.z) smaller = aux2;
+        }
+      }
+    }
+    if( aux != smaller) cell_switch(aux,smaller);
+  }
+  return h;
+}
+#ifdef DEBUG
 
 void cell_will_spawn_alert(cell_ptr ptr){
   printf("Cell will spawn at (%d,%d,%d)\n",ptr->pos.x,ptr->pos.y,ptr->pos.z);
