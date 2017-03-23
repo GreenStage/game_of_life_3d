@@ -37,10 +37,10 @@ void cell_update_state(cell_ptr cell);
 void cell_find_next_state(cell_ptr cell,int neighbors);
 int cell_set_neighbors(cell_ptr cell1, cell_ptr cell2,int index);
 void cell_add_first_neighbor(cell_ptr cell, int i, cell_ptr neigh);
-
+void cell_reset_neighbors(cell_ptr cell);
 pos_ cell_get_absolute_pos(cell_ptr cell, int relative_position, int max_pos);
 
-void cell_list_print(cell_ptr ptr);
+void cell_list_print(cell_ptr ptr, FILE * file);
 #define state_to_str(STATE) ( (STATE) == (0) ? ("Dead") : ("Alive") )
 /*DEBUGGING FUNCTIONS*/
 #ifdef DEBUG

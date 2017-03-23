@@ -1,7 +1,6 @@
 #ifndef DEFS_HEADER
 #define DEFS_HEADER
-
-#define DEBUG
+#define DEBUG_TIME
 
 typedef enum bool_ { false = 0, true } bool;
 typedef enum mirror_ {

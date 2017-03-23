@@ -13,12 +13,12 @@ world_stct * init_world( int size){
 }
 
 world_stct * world_map(world_stct * world){
-  int a;
+	int v, a, l;
   int size = world->size;
   cell_ptr cell_list = world->cell_list;
   cell_ptr aux;
   int first_neighbors_ctr, i, j, k, index;
-  int neighbor_neigh[6], count_n_neigh;
+  int neighbor_neigh[5], count_n_neigh;
   cell_ptr aux1, aux2;
   relative_position  pos;
   pos_ pos_aux;
@@ -32,6 +32,11 @@ world_stct * world_map(world_stct * world){
       continue;
 
     first_neighbors_ctr = 0;
+	for (i = 0; i < 6; i++) {
+		aux = cell_get_first_neighbor(aux1, i);
+		if (cell_exists(aux) && cell_get_state(aux) == alive) 
+			first_neighbors_ctr++;
+	}
 #ifdef DEBUG
       printf("Cell list processing at position %d\n", counter);
       counter++;
@@ -39,6 +44,7 @@ world_stct * world_map(world_stct * world){
 
     for(aux2 = cell_get_next(aux1); aux2 != NULL; aux2 = cell_get_next(aux2) ){
       border = cell_get_near_border(aux2);
+
       if ( -1  != (index = cell_get_diamond_index(aux2, aux1,world->size,near_none) ) )
         first_neighbors_ctr += cell_set_neighbors(aux1,aux2,index);
 
@@ -72,13 +78,72 @@ world_stct * world_map(world_stct * world){
           first_neighbors_ctr += cell_set_neighbors(aux1,aux2,index);
       }
 
+
+	  if ( ( border & near_xmax ) && ( border & near_ymax ) ) {
+		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_xmax | near_ymax)))
+			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
+	  }
+
+	  if ( (border & near_xmax) && (border & near_zmax) ) {
+		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_xmax | near_zmax)))
+			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
+	  }
+
+	  if ((border & near_xmax) && (border & near_y0)) {
+		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_xmax | near_y0)))
+			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
+	  }
+
+	  if ((border & near_xmax) && (border & near_z0)) {
+		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_xmax | near_z0)))
+			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
+	  }
+
+	  if ((border & near_ymax) && (border & near_zmax)) {
+		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_ymax | near_zmax)))
+			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
+	  }
+
+	  if ((border & near_ymax) && (border & near_x0)) {
+		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_ymax | near_x0)))
+			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
+	  }
+
+	  if ((border & near_ymax) && (border & near_z0)) {
+		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_ymax | near_z0)))
+			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
+	  }
+
+	  if ((border & near_zmax) && (border & near_x0)) {
+		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_zmax | near_x0)))
+			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
+	  }
+
+	  if ((border & near_zmax) && (border & near_y0)) {
+		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_zmax | near_y0)))
+			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
+	  }
+
+	  if ((border & near_x0) && (border & near_y0)) {
+		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_x0 | near_y0)))
+			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
+	  }
+
+	  if ((border & near_x0) && (border & near_z0)) {
+		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_x0 | near_z0)))
+			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
+	  }
+	  if ((border & near_y0) && (border & near_z0)) {
+		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_y0 | near_z0)))
+			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
+	  }
     }
 
     cell_find_next_state(aux1,first_neighbors_ctr);
     for( i=0 ; i < 6 ; i++ ){ /*Dead neighbor should be born?*/
 	     border = near_xmax << (i);
       count_n_neigh=1;
-
+	  aux = cell_get_first_neighbor(aux1, i);
       if( !cell_exists( cell_get_first_neighbor(aux1,i) ) ){
         get_neighbors_by_key(neighbor_neigh,i);
 
@@ -88,16 +153,16 @@ world_stct * world_map(world_stct * world){
             count_n_neigh++;
         }
         if( cell_will_spawn(count_n_neigh) ){
-			int v,a,l;
+
           pos_aux = cell_get_absolute_pos(aux1,i,world->size - 1);
           cell_list = insert_new_cell(cell_list,pos_aux,world->size - 1) ;
           cell_add_first_neighbor(aux1,i,cell_list);
 
           for(k = 0; k < 5; k++){
             if(( cell_exists((aux = cell_get_second_neighbor(aux1, neighbor_neigh[k])) ) ) && cell_get_state(aux) == alive ){
-			        v = cell_get_relative_to_neighbor(cell_get_relative_by_index(i), cell_get_relative_by_index(neighbor_neigh[k] + 6));
-			        index = cell_get_index_by_relative(v);
-              cell_add_first_neighbor(aux, index ,cell_list);
+			     v = cell_get_relative_to_neighbor(cell_get_relative_by_index(i), cell_get_relative_by_index(neighbor_neigh[k] + 6));
+			     index = cell_get_index_by_relative(v);
+		         cell_add_first_neighbor(aux, index ,cell_list);
 
             }
           }
@@ -110,7 +175,6 @@ world_stct * world_map(world_stct * world){
     }
 
   }
-      printf("num :%d\n",a);
   world->cell_list = cell_list;
   return world;
 }
@@ -157,10 +221,9 @@ void get_neighbors_by_key(int retval[5], int key){
 
 world_stct * world_update_state(world_stct * world){
   cell_ptr head = world->cell_list;
-  cell_ptr aux, aux2;
-
+  cell_ptr aux, aux2,neighbors;
   for(aux = head , aux2 = NULL; aux != NULL;){
-
+	cell_reset_neighbors(aux);
     if(cell_get_next_state(aux) == dead) {
       if(head == aux){
         aux = cell_remove_next(aux2,aux);

@@ -56,7 +56,7 @@ int cell_get_index_by_relative(relative_position pos) {
 		return 10;
 		break;
 	case D2:
-		return 12;
+		return 11;
 		break;
 	case F1_L1:
 		return 12;
@@ -176,10 +176,14 @@ cell_ptr insert_new_cell( cell_ptr ptr, pos_ pos, int max_pos){
 cell_ptr cell_remove_next(cell_ptr prev,cell_ptr cell){
   cell_ptr aux = cell->next;
   if ( prev != NULL ) prev->next = aux;
+
   free(cell);
   return aux ;
 }
-
+void cell_reset_neighbors(cell_ptr cell) {
+	memset(cell->first_neighbors, 0, sizeof(cell_ptr) * 6);
+	memset(cell->second_neighbors, 0, sizeof(cell_ptr) * 18);
+}
 
 bool cell_will_spawn(int neighbors){
   if( neighbors == 2 || neighbors == 3 ){
@@ -200,74 +204,59 @@ void cell_find_next_state(cell_ptr cell,int neighbors){
 
 }
 
-int cell_get_coord_dif(int a, int b, int size, int type){
-  switch(type){
-    case 1:
-      return size + a - b;
-      break;
-
-    case 2:
-      return a - size - b;
-      break;
-
-    default:
-      return a - b;
-      break;
-  }
-}
-
 int  cell_get_diamond_index(cell_ptr cell1, cell_ptr ref, int map_size,mirror near_border){
   int distance,is_negative = 0, i;
   int retval = -1;
-  int coord_dif[3] =  { cell_get_coord_dif(cell1->pos.x, ref->pos.x,map_size, 0),
-                        cell_get_coord_dif(cell1->pos.y, ref->pos.y,map_size, 0),
-                        cell_get_coord_dif(cell1->pos.z, ref->pos.z,map_size, 0)};
+  pos_ pos = cell1->pos;
+  int coord_dif[3];
 
+  if (near_border & near_x0)	pos.x += map_size ;
+  if (near_border & near_xmax) pos.x -= map_size ;
+  
+  if (near_border & near_y0) 	pos.y += map_size;
+  if (near_border & near_ymax) pos.y -= map_size;
+  
+  if (near_border & near_z0) 	pos.z += map_size;
+  if (near_border & near_zmax) pos.z -= map_size;
 
-  if(near_border == near_x0) coord_dif[0]        = cell_get_coord_dif(cell1->pos.x, ref->pos.x,map_size,1);
-  else if(near_border == near_xmax) coord_dif[0] = cell_get_coord_dif(cell1->pos.x, ref->pos.x,map_size,2);
+  coord_dif[0] = pos.x - ref->pos.x;
+  coord_dif[1] = pos.y - ref->pos.y;
+  coord_dif[2] = pos.z - ref->pos.z;
 
-  else if(near_border == near_y0) coord_dif[1]   = cell_get_coord_dif(cell1->pos.y, ref->pos.y,map_size,1);
-  else if(near_border == near_ymax) coord_dif[1] = cell_get_coord_dif(cell1->pos.y, ref->pos.y,map_size,2);
-
-  else if(near_border == near_z0) coord_dif[2]   = cell_get_coord_dif(cell1->pos.z, ref->pos.z,map_size,1);
-  else if(near_border == near_zmax) coord_dif[2] = cell_get_coord_dif(cell1->pos.z, ref->pos.z,map_size,2);
-
-  else ;
-
-  if((distance = abs(coord_dif[0]) + abs(coord_dif[1]) + abs(coord_dif[2])) != 1 && distance != 2)
-    return retval;
+  if ((distance = abs(coord_dif[0]) + abs(coord_dif[1]) + abs(coord_dif[2])) != 1 && distance != 2)
+	  return -1;
 
 #ifdef DEBUG
-  printf("coord_dif : [%d,%d,%d]\n ",coord_dif[0],coord_dif[1],coord_dif[2]);
+  printf("coord_dif : [%d,%d,%d]\n ", coord_dif[0], coord_dif[1], coord_dif[2]);
 #endif
-	if (coord_dif[0] == 1 && coord_dif[1] == 0 && coord_dif[2] == 0) retval			= 0;
-	else if (coord_dif[0] == -1 && coord_dif[1] == 0 && coord_dif[2] == 0) retval	= 1;
-	else if (coord_dif[0] == 0 && coord_dif[1] == 1 && coord_dif[2] == 0) retval	= 2;
-	else if (coord_dif[0] == 0 && coord_dif[1] == -1 && coord_dif[2] == 0) retval	= 3;
-	else if (coord_dif[0] == 0 && coord_dif[1] == 0 && coord_dif[2] == 1) retval	= 4;
-	else if (coord_dif[0] == 0 && coord_dif[1] == 0 && coord_dif[2] == -1) retval	= 5;
 
-	else if (coord_dif[0] == 2 && coord_dif[1] == 0 && coord_dif[2] == 0) retval	= 6;
-	else if (coord_dif[0] == -2 && coord_dif[1] == 0 && coord_dif[2] == 0) retval	= 7;
-	else if (coord_dif[0] == 0 && coord_dif[1] == 2 && coord_dif[2] == 0) retval	= 8;
-	else if (coord_dif[0] == 0 && coord_dif[1] == -2 && coord_dif[2] == 0) retval	= 9;
-	else if (coord_dif[0] == 0 && coord_dif[1] == 0 && coord_dif[2] == 2) retval	= 10;
-	else if (coord_dif[0] == 2 && coord_dif[1] == 0 && coord_dif[2] == -2) retval	= 11;
-	else if (coord_dif[0] == 1 && coord_dif[1] == -1 && coord_dif[2] == 0) retval	= 12;
-	else if (coord_dif[0] == -1 && coord_dif[1] == 1 && coord_dif[2] == 0) retval	= 13;
-	else if (coord_dif[0] == 1 && coord_dif[1] == 1 && coord_dif[2] == 0) retval	= 14;
-	else if (coord_dif[0] == -1 && coord_dif[1] == -1 && coord_dif[2] == 0) retval	= 15;
-	else if (coord_dif[0] == 0 && coord_dif[1] == -1 && coord_dif[2] == 1) retval	= 16;
-	else if (coord_dif[0] == 0 && coord_dif[1] == 1 && coord_dif[2] == -1) retval	= 17;
-	else if (coord_dif[0] == 0 && coord_dif[1] == 1 && coord_dif[2] == 1) retval	= 18;
-	else if (coord_dif[0] == 0 && coord_dif[1] == -1 && coord_dif[2] == -1) retval	= 19;
-	else if (coord_dif[0] == 1 && coord_dif[1] == 0 && coord_dif[2] == 1) retval	= 20;
-	else if (coord_dif[0] == -1 && coord_dif[1] == 0 && coord_dif[2] == -1) retval	= 21;
-	else if (coord_dif[0] == -1 && coord_dif[1] == 0 && coord_dif[2] == 1) retval	= 22;
-	else if	(coord_dif[0] == 1 && coord_dif[1] == 0 && coord_dif[2] == -1) retval	= 23;
-	else retval = -1;
-	return retval;
+  if (coord_dif[0] == 1 && coord_dif[1] == 0 && coord_dif[2] == 0) retval = 0;
+  else if (coord_dif[0] == -1 && coord_dif[1] == 0 && coord_dif[2] == 0) retval = 1;
+  else if (coord_dif[0] == 0 && coord_dif[1] == 1 && coord_dif[2] == 0) retval = 2;
+  else if (coord_dif[0] == 0 && coord_dif[1] == -1 && coord_dif[2] == 0) retval = 3;
+  else if (coord_dif[0] == 0 && coord_dif[1] == 0 && coord_dif[2] == 1) retval = 4;
+  else if (coord_dif[0] == 0 && coord_dif[1] == 0 && coord_dif[2] == -1) retval = 5;
+
+  else if (coord_dif[0] == 2 && coord_dif[1] == 0 && coord_dif[2] == 0) retval = 6;
+  else if (coord_dif[0] == -2 && coord_dif[1] == 0 && coord_dif[2] == 0) retval = 7;
+  else if (coord_dif[0] == 0 && coord_dif[1] == 2 && coord_dif[2] == 0) retval = 8;
+  else if (coord_dif[0] == 0 && coord_dif[1] == -2 && coord_dif[2] == 0) retval = 9;
+  else if (coord_dif[0] == 0 && coord_dif[1] == 0 && coord_dif[2] == 2) retval = 10;
+  else if (coord_dif[0] == 0 && coord_dif[1] == 0 && coord_dif[2] == -2) retval = 11;
+  else if (coord_dif[0] == 1 && coord_dif[1] == -1 && coord_dif[2] == 0) retval = 12;
+  else if (coord_dif[0] == -1 && coord_dif[1] == 1 && coord_dif[2] == 0) retval = 13;
+  else if (coord_dif[0] == 1 && coord_dif[1] == 1 && coord_dif[2] == 0) retval = 14;
+  else if (coord_dif[0] == -1 && coord_dif[1] == -1 && coord_dif[2] == 0) retval = 15;
+  else if (coord_dif[0] == 0 && coord_dif[1] == -1 && coord_dif[2] == 1) retval = 16;
+  else if (coord_dif[0] == 0 && coord_dif[1] == 1 && coord_dif[2] == -1) retval = 17;
+  else if (coord_dif[0] == 0 && coord_dif[1] == 1 && coord_dif[2] == 1) retval = 18;
+  else if (coord_dif[0] == 0 && coord_dif[1] == -1 && coord_dif[2] == -1) retval = 19;
+  else if (coord_dif[0] == 1 && coord_dif[1] == 0 && coord_dif[2] == 1) retval = 20;
+  else if (coord_dif[0] == -1 && coord_dif[1] == 0 && coord_dif[2] == -1) retval = 21;
+  else if (coord_dif[0] == -1 && coord_dif[1] == 0 && coord_dif[2] == 1) retval = 22;
+  else if (coord_dif[0] == 1 && coord_dif[1] == 0 && coord_dif[2] == -1) retval = 23;
+  else retval = -1;
+  return retval;
 }
 
 pos_ cell_get_absolute_pos(cell_ptr cell, int relative_position, int max_pos){
@@ -330,10 +319,10 @@ int cell_set_neighbors(cell_ptr cell1, cell_ptr cell2,int index){
 
   return first_neighbors_ctr;
 }
-void cell_list_print(cell_ptr ptr){
+void cell_list_print(cell_ptr ptr, FILE * file){
   cell_ptr aux;
   for(aux = ptr; aux != NULL; aux = aux->next)
-    printf("(%d,%d,%d) is %s\n", aux->pos.x,aux->pos.y,aux->pos.z,state_to_str(aux->state) );
+    fprintf(file,"(%d,%d,%d) is %s\n", aux->pos.x,aux->pos.y,aux->pos.z,state_to_str(aux->state) );
 }
 void cell_switch(cell_ptr c1, cell_ptr c2){
   struct cell_ aux;
