@@ -12,17 +12,17 @@ typedef struct world_stct {
 /*FUNCTIONS*/
 world_stct * init_world( int size);
 
-cell_stct * world_map(cell_stct * cell_list, int runs);
+cell_stct * world_map(cell_stct * cell_list, int runs, int world_stct);
 
-cell_stct * insert_new_cell(cell_stct *list, State st, int x , int y, int z);
+cell_stct * next_world_gen(cell_stct *list, int world_size);
 
-cell_stct * next_world_gen(cell_stct *list);
+void generate_relative_coords(int pos_index, int *coords, int world_size);
 
-void generate_coords(int *coords, int pos_index);
-
-Position belongs_to_diamond(int xcomp, int ycomp, int zcomp, int x, int y, int z);
+Position belongs_to_diamond(int *coord_dif);
 
 Position get_neighbour_pos(int distance, int coord_dif[3]);
+
+void get_comp_coords(int near_border, int world_size, int xcomp, int ycomp, int zcomp, int x, int y, int z, int *coords );
 
 void set_neighbour(cell_stct *current, cell_stct *neighbour, Position pos);
 

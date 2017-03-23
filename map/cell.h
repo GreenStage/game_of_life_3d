@@ -13,10 +13,12 @@ typedef struct cell_{
   State state;
   State next_state;
   int visited;
+  int near_border;
   struct cell_ * next;
 } cell_stct;
 
 /*FUNCTIONS*/
+cell_stct * insert_new_cell(cell_stct *list, State st, int x , int y, int z, int world_size);
 
 State cell_get_next_state(State current_state, int neighbours);
 

@@ -3,6 +3,33 @@
 #include <string.h>
 #include "cell.h"
 
+cell_stct * insert_new_cell(cell_stct *list, State st, int x , int y, int z, int world_size){
+  cell_stct *new_cell = (cell_stct*) malloc(sizeof(cell_stct));
+  memset(new_cell, 0, sizeof(cell_stct));
+
+  new_cell->x = x;
+  new_cell->y = y;
+  new_cell->z = z;
+  new_cell->state = st;
+  new_cell->next_state = alive; /*default alive*/
+  new_cell->visited = 0;
+
+  if(x - world_size >= -2 || y - world_size >= -2 || z - world_size >= -2)
+    new_cell->near_border = 1;
+  else if(x <= 1 || y <= 1 || z <= 1)
+    new_cell->near_border = 1;
+
+  new_cell->first_neighbors = (cell_stct**) malloc(6*sizeof(cell_stct*));
+  memset(new_cell->first_neighbors, 0, 6*sizeof(cell_stct*));
+
+  new_cell->second_neighbors  = (cell_stct**) malloc(18*sizeof(cell_stct*));
+  memset(new_cell->second_neighbors, 0, 18*sizeof(cell_stct*));
+
+  new_cell->next = list;
+
+  return new_cell;
+}
+
 State cell_get_next_state(State current_state, int neighbours){
   if( current_state == alive && neighbours >= 2 && neighbours <= 4){
     return alive;

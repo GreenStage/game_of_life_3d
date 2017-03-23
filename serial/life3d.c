@@ -45,14 +45,16 @@ int main(int argc, char * argv[]){
     if (!sscanf(line,"%d %d %d", &x,&y,&z))
       error_exit("Error: Invalid position",ERR_INVALID_POS);
 
-    world->cell_list = insert_new_cell(world->cell_list, alive, x, y, z);
+    world->cell_list = insert_new_cell(world->cell_list, alive, x, y, z, world->size);
+    if(world->cell_list->near_border == 1)
+      printf("Inserted near border cell\n");
   }
 
-  world_map(world->cell_list, 0); /*First time neighbour mapping no cells will be removed; return value ignored*/
+  world_map(world->cell_list, 0, world->size); /*First time neighbour mapping no cells will be removed; return value ignored*/
 
   for(i = 0; i < generations; i++){
-    world->cell_list = next_world_gen(world->cell_list);
-    world->cell_list = world_map(world->cell_list, 0);
+    world->cell_list = next_world_gen(world->cell_list, world->size);
+    world->cell_list = world_map(world->cell_list, 0, world->size);
     if(world->cell_list == NULL){
       printf("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\nEntire population died in generation %d! You suck\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n", i+1);
       break;
@@ -62,7 +64,7 @@ int main(int argc, char * argv[]){
   cell_stct *auxx;
   if(world->cell_list != NULL)
     for(auxx = world->cell_list; auxx != NULL; auxx = auxx->next)
-        printf("FINAL %d %d %d\n", auxx->x, auxx->y, auxx->z);
+        printf("FINAL RESULT %d %d %d\n", auxx->x, auxx->y, auxx->z);
 
   clear_map(world->cell_list);
 
