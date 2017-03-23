@@ -322,7 +322,7 @@ int cell_set_neighbors(cell_ptr cell1, cell_ptr cell2,int index){
 void cell_list_print(cell_ptr ptr, FILE * file){
   cell_ptr aux;
   for(aux = ptr; aux != NULL; aux = aux->next)
-    fprintf(file,"(%d,%d,%d) is %s\n", aux->pos.x,aux->pos.y,aux->pos.z,state_to_str(aux->state) );
+    fprintf(file,"%d %d %d\n", aux->pos.x,aux->pos.y,aux->pos.z,state_to_str(aux->state) );
 }
 void cell_switch(cell_ptr c1, cell_ptr c2){
   struct cell_ aux;
