@@ -13,12 +13,14 @@ int main(int argc, char * argv[]){
 
   int generations, cube_size;
   pos_ pos;
-  int i;
+  int a,i;
   char line[MAX_LINE_SIZE];
   FILE * inputFile, * Outputfile;
   world_stct *world;
+  char output_file[50];
 #ifdef DEBUG_TIME
-  clock_t start_t, end_t, total_t;
+  clock_t start_t, end_t;
+  double total_t;
   start_t = clock();
 #endif
 
@@ -43,20 +45,20 @@ int main(int argc, char * argv[]){
   if (!sscanf(line,"%d", &cube_size)){
     error_exit("Error: Invalid cube size",ERR_INVALID_SIZE);
   }
-  if (!(Outputfile = fopen("output.txt", "w")))
-	  exit(1);
+
 
   world = init_world( cube_size);
 
-  for(i=0; fgets(line,MAX_LINE_SIZE,inputFile) ;i++){
+  for(a=0; fgets(line,MAX_LINE_SIZE,inputFile) ;a++){
     if (!sscanf(line,"%d %d %d", &pos.x,&pos.y,&pos.z))
       error_exit("Error: Invalid position",ERR_INVALID_POS);
     world_add_cell(world,pos);
   }
-
+  sprintf(output_file, "s%de%d.%d.out.txt", cube_size, a, generations);
+  if (!(Outputfile = fopen(output_file, "w")))
+	exit(1);
 
   for(i = 0; i < generations;i++){
-    printf("%d\n",i);
 #ifdef DEBUG
     printf("---- Generation %d: ----------\n",i);
     printf("\n");
@@ -68,13 +70,14 @@ int main(int argc, char * argv[]){
   }
   world_order(world);
   world_print(world,Outputfile);
-  fclose(Outputfile);
+
 
 #ifdef DEBUG_TIME
   end_t = clock();
-  total_t = (double)(end_t - start_t) / CLOCKS_PER_SEC;
-  fprintf(Outputfile, "Total time taken by CPU: %f\n", (double) total_t);
+  total_t = (double)( (end_t - start_t) / CLOCKS_PER_SEC );
+  fprintf(Outputfile, "Total time taken by CPU: %f\n",total_t);
+
 #endif
-  	  exit(0);
+  fclose(Outputfile);
   exit(0);
 }

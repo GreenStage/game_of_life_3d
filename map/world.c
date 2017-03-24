@@ -19,6 +19,7 @@ world_stct * init_world( int size){
 
 void world_add_cell( world_stct * world, pos_ pos){
   world->cell_matrix[pos.x][pos.y] = insert_new_cell(world->cell_matrix[pos.x][pos.y],pos, world->size -1);
+  cell_update_state(world->cell_matrix[pos.x][pos.y]);
 }
 void world_update_gen(world_stct * world){
   int it1, it2;
@@ -30,7 +31,7 @@ void world_update_gen(world_stct * world){
   }
 }
 int get_coord(int a, int size){
-  if(a >= size) a = size - a;
+  if(a >= size) a = a - size;
   else if(a < 0) a = size + a ;
   return a;
 }
@@ -81,7 +82,51 @@ cell_ptr world_get_next_list(world_stct * world,int x, int y,int it){
       break;
   }
 }
-
+pos_ get_pos_by_it(int it) {
+	pos_ retval;
+	switch (it) {
+		case 0:
+			retval.x = 0; retval.y = 0;
+			break;
+		case 1:
+			retval.x = 0; retval.y = 1;
+			break;
+		case 2:
+			retval.x = 0; retval.y = -1;
+			break;
+		case 3:
+			retval.x = 1; retval.y = 0;
+			break;
+		case 4:
+			retval.x = -1; retval.y = 0;
+			break;
+		case 5:
+			retval.x = 2; retval.y = 0;
+			break;
+		case 6:
+			retval.x = -2; retval.y = 0;
+			break;
+		case 7:
+			retval.x = 0; retval.y = 2;
+			break;
+		case 8:
+			retval.x = 0; retval.y = -2;
+			break;
+		case 9:
+			retval.x = 1; retval.y = 1;
+			break;
+		case 10:
+			retval.x = 1; retval.y = -1;
+			break;
+		case 11:
+			retval.x = -1; retval.y = 1;
+			break;
+		case 12:
+			retval.x = -1; retval.y = -1;
+			break;
+	}
+	return retval;
+}
 void world_map(world_stct * world){
   int it1, it2, it3;
   int first_neighbors_ctr, index;
@@ -96,8 +141,8 @@ void world_map(world_stct * world){
     while(!cell_exists(aux1)){
       if(it2 == world->size -1){
         it1 ++;
+		it2 = 0;
         if(it1 == world->size) break;
-        it2 = 0;
       }
       else it2++;
       aux1 = world->cell_matrix[it1][it2];
@@ -112,71 +157,16 @@ void world_map(world_stct * world){
 #endif
     border = near_none;
 
-    for(it3 = 0, aux2 = world->cell_matrix[it1][it2]; aux2 != NULL ; it3++ , aux2 = world_get_next_list(world,it1, it2, it3)){
+    for(it3 = 0, aux2 = world->cell_matrix[it1][it2]; it3 < 13 ; it3++ , aux2 = world_get_next_list(world,it1, it2, it3)){
       for(aux3 = aux2; aux3 != NULL; aux3 = cell_get_next(aux3)){
         border = cell_get_near_border(aux3);
 
-        if ( ( border & near_xmax ) && ( border & near_ymax ) ) {
-    		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_xmax | near_ymax)))
-    			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
-        }
+		if (-1 != (index = cell_get_diamond_index(aux3, aux1, get_pos_by_it(it3), world->size,near_none)))
+			cell_set_neighbors(aux1, aux3, index);
 
-    	  if ( (border & near_xmax) && (border & near_zmax) ) {
-    		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_xmax | near_zmax)))
-    			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
-    	  }
+		if (-1 != ( index = cell_get_diamond_index(aux3, aux1, get_pos_by_it(it3), world->size, border & (near_zmax | near_z0))) )
+			cell_set_neighbors(aux1, aux3, index);
 
-    	  if ((border & near_xmax) && (border & near_y0)) {
-    		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_xmax | near_y0)))
-    			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
-    	  }
-
-    	  if ((border & near_xmax) && (border & near_z0)) {
-    		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_xmax | near_z0)))
-    			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
-    	  }
-
-    	  if ((border & near_ymax) && (border & near_zmax)) {
-    		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_ymax | near_zmax)))
-    			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
-    	  }
-
-    	  if ((border & near_ymax) && (border & near_x0)) {
-    		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_ymax | near_x0)))
-    			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
-    	  }
-
-    	  if ((border & near_ymax) && (border & near_z0)) {
-    		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_ymax | near_z0)))
-    			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
-    	  }
-
-    	  if ((border & near_zmax) && (border & near_x0)) {
-    		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_zmax | near_x0)))
-    			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
-    	  }
-
-    	  if ((border & near_zmax) && (border & near_y0)) {
-    		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_zmax | near_y0)))
-    			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
-    	  }
-
-    	  if ((border & near_x0) && (border & near_y0)) {
-    		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_x0 | near_y0)))
-    			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
-    	  }
-
-    	  if ((border & near_x0) && (border & near_z0)) {
-    		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_x0 | near_z0)))
-    			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
-    	  }
-    	  if ((border & near_y0) && (border & near_z0)) {
-    		  if (-1 != (index = cell_get_diamond_index(aux2, aux1, world->size, near_y0 | near_z0)))
-    			  if (cell_set_neighbors(aux1, aux2, index) != 0) exit(ERR_INVALID_GEN);
-    	  }
-
-
-        if( index != -1 ) cell_set_neighbors(aux2,aux3,index);
       }
     }
     aux1 = cell_get_next(aux1);
@@ -187,25 +177,27 @@ void world_get_next_gen(world_stct * world){
   int it3, it4, it5;
   int index,v;
   int neighbors_count;
-  int neighbor_neigh[6];
-  cell_ptr aux,aux1;
+  int neighbor_neigh[5];
+  cell_ptr aux,aux1,aux2;
   mirror border = near_none;
   pos_ pos_aux;
   for(it1= 0, it2 = 0, aux1 = world->cell_matrix[0][0]; it1 < world->size; aux1 = cell_get_next(aux1)){
 
-    if(!cell_exists(aux1)){
-      if(it2 == world->size -1){
-        it1 ++;
-        if(it1 == world->size) break;
-        it2 = 0;
-      }
-      else it2++;
-
-      aux1 = world->cell_matrix[it1][it2];
-    }
+	while (!cell_exists(aux1)) {
+		if (it2 == world->size - 1) {
+			it1++;
+			it2 = 0;
+			if (it1 == world->size) break;
+		}
+		else it2++;
+		aux1 = world->cell_matrix[it1][it2];
+	}
+	if (it1 == world->size) break;
+	if (cell_get_state(aux1) != alive) continue;
 
     for(neighbors_count = 0, it3 = 0; it3 < 6; it3 ++){
-      if( cell_exists(cell_get_neighbor(aux1,it3) ) ) neighbors_count ++;
+		aux2 = cell_get_neighbor(aux1, it3);
+		if( cell_exists( aux2 ) && cell_get_state( aux2 ) == alive ) neighbors_count ++;
     }
     cell_find_next_state(aux1,neighbors_count);
 
@@ -235,7 +227,8 @@ void world_get_next_gen(world_stct * world){
             }
           }
 #ifdef DEBUG
-          cell_will_spawn_alert(  world->cell_matrix[pos_aux.x][pos_aux.y]);
+
+          cell_will_spawn_alert(  world->cell_matrix[pos_aux.x][pos_aux.y],aux1);
 #endif
         }
       }
@@ -288,7 +281,8 @@ void world_order(world_stct * world){
   int it1,it2;
   for(it1 = 0;it1 < world->size;it1++){
     for(it2 = 0 ; it2 < world->size; it2++){
-      if(world->cell_matrix[it1][it2] != NULL) cell_order(world->cell_matrix[it1][it2]);
+      if(world->cell_matrix[it1][it2] != NULL)
+		  world->cell_matrix[it1][it2] = cell_order(world->cell_matrix[it1][it2]);
     }
   }
 }

@@ -135,25 +135,28 @@ void cell_add_neighbor(cell_ptr cell, int i, cell_ptr neigh){  cell->neighbors[i
 
 void cell_update_state(cell_ptr cell) {
   cell->state = cell->next_state;
-  cell->next_state = undefined;
+  cell->next_state = alive;
 }
 cell_ptr cell_list_update_state(cell_ptr cell){
-  cell_ptr aux, aux2 = NULL;
-  for(aux = cell; aux != NULL; aux = aux->next){
-    cell_update_state(aux);
-    if( aux->state == dead) {
-      if( aux == cell){
-        aux = cell_remove_next(aux2,aux);
-        cell = aux;
-      }
-      else aux = cell_remove_next(aux2,aux);
-    }
-    else{
-      aux2 = aux;
-      aux = aux->next;
-    }
-  }
-  return cell;
+	cell_ptr head = cell;
+	cell_ptr aux, aux2, neighbors;
+	for (aux = head, aux2 = NULL; aux != NULL;) {
+		cell_reset_neighbors(aux);
+		if (cell_get_next_state(aux) == dead) {
+			if (head == aux) {
+				aux = cell_remove_next(aux2, aux);
+				head = aux;
+			}
+			else aux = cell_remove_next(aux2, aux);
+		}
+		else {
+			cell_update_state(aux);
+			aux2 = aux;
+			aux = cell_get_next(aux);
+		}
+
+	}
+	return head;
 }
 
 cell_ptr insert_new_cell( cell_ptr ptr, pos_ pos, int max_pos){
@@ -231,24 +234,18 @@ int cell_get_coord_dif(int a, int b, int size, int type){
   }
 }
 
-int  cell_get_diamond_index(cell_ptr cell1, cell_ptr ref, int map_size,mirror near_border){
+int  cell_get_diamond_index(cell_ptr cell1, cell_ptr ref,pos_ xydif, int map_size,mirror near_border){
   int distance;
   int retval = -1;
-  int coord_dif[3] =  { cell_get_coord_dif(cell1->pos.x, ref->pos.x,map_size, 0),
-                        cell_get_coord_dif(cell1->pos.y, ref->pos.y,map_size, 0),
+  int coord_dif[3] =  { xydif.x,
+						xydif.y,
                         cell_get_coord_dif(cell1->pos.z, ref->pos.z,map_size, 0)};
 
   if(abs(coord_dif[0]) + abs(coord_dif[1]) + abs(coord_dif[2])  == 0)
     return retval;
 
-  if(near_border == near_x0) coord_dif[0]        = cell_get_coord_dif(cell1->pos.x, ref->pos.x,map_size,1);
-  else if(near_border == near_xmax) coord_dif[0] = cell_get_coord_dif(cell1->pos.x, ref->pos.x,map_size,2);
-
-  else if(near_border == near_y0) coord_dif[1]   = cell_get_coord_dif(cell1->pos.y, ref->pos.y,map_size,1);
-  else if(near_border == near_ymax) coord_dif[1] = cell_get_coord_dif(cell1->pos.y, ref->pos.y,map_size,2);
-
-  else if(near_border == near_z0) coord_dif[2]   = cell_get_coord_dif(cell1->pos.z, ref->pos.z,map_size,1);
-  else if(near_border == near_zmax) coord_dif[2] = cell_get_coord_dif(cell1->pos.z, ref->pos.z,map_size,2);
+  if(near_border & near_z0) coord_dif[2]   = cell_get_coord_dif(cell1->pos.z, ref->pos.z,map_size,1);
+  else if(near_border & near_zmax) coord_dif[2] = cell_get_coord_dif(cell1->pos.z, ref->pos.z,map_size,2);
 
   else ;
 
@@ -378,7 +375,10 @@ cell_ptr cell_order(cell_ptr h){
 }
 #ifdef DEBUG
 
-void cell_will_spawn_alert(cell_ptr ptr){
-  printf("Cell will spawn at (%d,%d,%d)\n",ptr->pos.x,ptr->pos.y,ptr->pos.z);
+void cell_will_spawn_alert(cell_ptr ptr, cell_ptr owner){
+  printf("Cell will spawn at (%d,%d,%d) says (%d,%d,%d)\n",ptr->pos.x,ptr->pos.y,ptr->pos.z, owner->pos.x, owner->pos.y, owner->pos.z);
 }
 #endif /*DEBUG*/
+void cell_reset_neighbors(cell_ptr cell) {
+	memset(cell->neighbors, 0, sizeof(cell_ptr) * 24);
+}
