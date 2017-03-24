@@ -4,6 +4,9 @@
 #include "cell.h"
 #include "../common/error.h"
 
+/*********************************
+* Struct: cell_ptr implementation
+**********************************/
 struct cell_{
   pos_ pos;
   mirror near_border;
@@ -19,6 +22,31 @@ static const relative_position position_map[24] = { FRONT,BACK,RIGHT,LEFT,UP,DOW
                                       F1_L1,B1_R1,F1_R1,B1_L1,U1_L1,D1_R1,U1_R1,D1_L1,U1_F1,D1_B1,U1_B1,D1_F1};
 
 relative_position cell_get_relative_by_index(int index) { return position_map[index]; }
+bool cell_exists(cell_ptr ptr) {  return (ptr != NULL)? 1 : 0; }
+mirror cell_get_near_border(cell_ptr cell) { return cell->near_border;}
+cell_ptr cell_get_next(cell_ptr cell) { return cell->next; }
+State cell_get_state(cell_ptr cell) { return cell->state; }
+State cell_get_next_state(cell_ptr cell) { return cell->next_state; }
+cell_ptr cell_get_neighbor(cell_ptr cell, int i) { return cell->neighbors[i]; }
+mirror cell_is_near_border(cell_ptr cell) { return cell->near_border;}
+void cell_add_neighbor(cell_ptr cell, int i, cell_ptr neigh){  cell->neighbors[i] = neigh; }
+
+
+int cell_get_coord_dif(int a, int b, int size, int type){
+  switch(type){
+    case 1:
+      return size + a - b;
+      break;
+
+    case 2:
+      return a - size - b;
+      break;
+
+    default:
+      return a - b;
+      break;
+  }
+}
 
 int cell_get_index_by_relative(relative_position pos) {
 	switch (pos) {
@@ -121,25 +149,17 @@ relative_position cell_get_relative_to_neighbor(relative_position pos_to_cell, r
 	else retval = NONE;
 	return retval;
 }
-void cell_getz(cell_ptr ptr){
-  printf ("Z == %d\n", ptr->pos.z);
-}
-bool cell_exists(cell_ptr ptr) {  return (ptr != NULL)? 1 : 0; }
-mirror cell_get_near_border(cell_ptr cell) { return cell->near_border;}
-cell_ptr cell_get_next(cell_ptr cell) { return cell->next; }
-State cell_get_state(cell_ptr cell) { return cell->state; }
-State cell_get_next_state(cell_ptr cell) { return cell->next_state; }
-cell_ptr cell_get_neighbor(cell_ptr cell, int i) { return cell->neighbors[i]; }
-mirror cell_is_near_border(cell_ptr cell) { return cell->near_border;}
-void cell_add_neighbor(cell_ptr cell, int i, cell_ptr neigh){  cell->neighbors[i] = neigh; }
+
+
 
 void cell_update_state(cell_ptr cell) {
   cell->state = cell->next_state;
   cell->next_state = alive;
+
 }
 cell_ptr cell_list_update_state(cell_ptr cell){
 	cell_ptr head = cell;
-	cell_ptr aux, aux2, neighbors;
+	cell_ptr aux, aux2;
 	for (aux = head, aux2 = NULL; aux != NULL;) {
 		cell_reset_neighbors(aux);
 		if (cell_get_next_state(aux) == dead) {
@@ -197,7 +217,13 @@ cell_ptr cell_remove_next(cell_ptr prev,cell_ptr cell){
   free(cell);
   return aux ;
 }
-
+void cell_free_list(cell_ptr head){
+  cell_ptr aux,aux2;
+  for(aux = head; aux != NULL; aux = aux2){
+    aux2 = aux->next;
+    free(aux);
+  }
+}
 
 bool cell_will_spawn(int neighbors){
   if( neighbors == 2 || neighbors == 3 ){
@@ -218,21 +244,6 @@ void cell_find_next_state(cell_ptr cell,int neighbors){
 
 }
 
-int cell_get_coord_dif(int a, int b, int size, int type){
-  switch(type){
-    case 1:
-      return size + a - b;
-      break;
-
-    case 2:
-      return a - size - b;
-      break;
-
-    default:
-      return a - b;
-      break;
-  }
-}
 
 int  cell_get_diamond_index(cell_ptr cell1, cell_ptr ref,pos_ xydif, int map_size,mirror near_border){
   int distance;
@@ -324,20 +335,15 @@ pos_ cell_get_absolute_pos(cell_ptr cell, int relative_position, int max_pos){
   }
   return retval;
 }
-int cell_set_neighbors(cell_ptr cell1, cell_ptr cell2,int index){
-  int first_neighbors_ctr = 0;
 
+void cell_set_neighbors(cell_ptr cell1, cell_ptr cell2,int index){
   #ifdef DEBUG
       printf("Cell (%d,%d,%d) is on index <%d> of cell (%d,%d,%d)\n",cell2->pos.x,cell2->pos.y,cell2->pos.z,index,cell1->pos.x,cell1->pos.y,cell1->pos.z);
   #endif
-  if(index < 6)     first_neighbors_ctr++;
   cell1->neighbors[index] = cell2;
   cell2->neighbors[(index % 2 == 0) ? index + 1 : index - 1] = cell1;
-
-
-
-  return first_neighbors_ctr;
 }
+
 void cell_list_print(cell_ptr ptr, FILE * file){
   cell_ptr aux;
   for(aux = ptr; aux != NULL; aux = aux->next)

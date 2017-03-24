@@ -3,7 +3,6 @@
 #include <string.h>
 #include "../common/defs.h"
 #include "../common/error.h"
-#include "../map/cell.h"
 #include "../map/world.h"
 #ifdef DEBUG_TIME
 #include <time.h>
@@ -16,7 +15,6 @@ int main(int argc, char * argv[]){
   int a,i;
   char line[MAX_LINE_SIZE];
   FILE * inputFile, * Outputfile;
-  world_stct *world;
   char output_file[50];
 #ifdef DEBUG_TIME
   clock_t start_t, end_t;
@@ -46,14 +44,19 @@ int main(int argc, char * argv[]){
     error_exit("Error: Invalid cube size",ERR_INVALID_SIZE);
   }
 
-
-  world = init_world( cube_size);
+  world = NULL;
+  world_init( cube_size );
 
   for(a=0; fgets(line,MAX_LINE_SIZE,inputFile) ;a++){
-    if (!sscanf(line,"%d %d %d", &pos.x,&pos.y,&pos.z))
-      error_exit("Error: Invalid position",ERR_INVALID_POS);
-    world_add_cell(world,pos);
+
+    if (!sscanf(line,"%d %d %d", &pos.x,&pos.y,&pos.z)){
+
+      error_exit("Error: Invalid position",ERR_INVALID_POS);}
+    world->add_cell(pos);
+
+
   }
+
   sprintf(output_file, "s%de%d.%d.out.txt", cube_size, a, generations);
   if (!(Outputfile = fopen(output_file, "w")))
 	exit(1);
@@ -64,13 +67,14 @@ int main(int argc, char * argv[]){
     printf("\n");
 #endif
 
-    world_map(world);  
-    world_get_next_gen(world);
-    world_update_gen(world);
+    world->map();
+    world->get_next_gen();
+    world->update_gen();
   }
-  world_order(world);
-  world_print(world,Outputfile);
 
+  world->order();
+  world->print(Outputfile);
+  world->destroy();
 
 #ifdef DEBUG_TIME
   end_t = clock();
