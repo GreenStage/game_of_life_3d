@@ -1,8 +1,8 @@
 #ifndef DEFS_HEADER
 #define DEFS_HEADER
-#define DEBUG_TIME
-#define DEBUG
 
+#define DEBUG
+#define DEBUG_TIME
 typedef enum bool_ { false = 0, true } bool;
 typedef enum mirror_ {
 	near_none = 0x0,

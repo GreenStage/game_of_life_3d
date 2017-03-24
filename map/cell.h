@@ -29,15 +29,14 @@ int cell_get_index_by_pos(relative_position pos);
 cell_ptr cell_get_next(cell_ptr cell);
 State cell_get_state(cell_ptr cell);
 State cell_get_next_state(cell_ptr cell);
-cell_ptr cell_get_first_neighbor(cell_ptr cell, int i);
-cell_ptr cell_get_second_neighbor(cell_ptr cell, int i);
-
+cell_ptr cell_get_neighbor(cell_ptr cell, int i);
+cell_ptr cell_list_update_state(cell_ptr cell);
 /*UPDATING FUNCTIONS*/
 void cell_update_state(cell_ptr cell);
 void cell_find_next_state(cell_ptr cell,int neighbors);
 int cell_set_neighbors(cell_ptr cell1, cell_ptr cell2,int index);
-void cell_add_first_neighbor(cell_ptr cell, int i, cell_ptr neigh);
-void cell_reset_neighbors(cell_ptr cell);
+void cell_add_neighbor(cell_ptr cell, int i, cell_ptr neigh);
+
 pos_ cell_get_absolute_pos(cell_ptr cell, int relative_position, int max_pos);
 
 void cell_list_print(cell_ptr ptr, FILE * file);

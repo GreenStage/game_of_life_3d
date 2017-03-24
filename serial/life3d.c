@@ -17,11 +17,11 @@ int main(int argc, char * argv[]){
   char line[MAX_LINE_SIZE];
   FILE * inputFile, * Outputfile;
   world_stct *world;
-
 #ifdef DEBUG_TIME
   clock_t start_t, end_t, total_t;
   start_t = clock();
 #endif
+
   if(argc < 3){
     error_exit("Error: Missing argument",ERR_MISSING_ARG);
   }
@@ -51,29 +51,30 @@ int main(int argc, char * argv[]){
   for(i=0; fgets(line,MAX_LINE_SIZE,inputFile) ;i++){
     if (!sscanf(line,"%d %d %d", &pos.x,&pos.y,&pos.z))
       error_exit("Error: Invalid position",ERR_INVALID_POS);
-	else {
-		world->cell_list = insert_new_cell(world->cell_list, pos, cube_size - 1);
-		cell_update_state(world->cell_list);
-	}
+    world_add_cell(world,pos);
   }
+
+
   for(i = 0; i < generations;i++){
-	  printf("gen %d\n", i);
-#ifdef DEBUG2
+    printf("%d\n",i);
+#ifdef DEBUG
     printf("---- Generation %d: ----------\n",i);
-    cell_list_print(world->cell_list);
     printf("\n");
 #endif
-  world = world_map(world);
-  world = world_update_state(world);
+
+    world_map(world);  
+    world_get_next_gen(world);
+    world_update_gen(world);
   }
-  world->cell_list = cell_order(world->cell_list);
-  cell_list_print(world->cell_list,Outputfile);
+  world_order(world);
+  world_print(world,Outputfile);
   fclose(Outputfile);
 
 #ifdef DEBUG_TIME
   end_t = clock();
   total_t = (double)(end_t - start_t) / CLOCKS_PER_SEC;
-  fprintf(Outputfile, "Total time taken by CPU: %f\n", total_t);
+  fprintf(Outputfile, "Total time taken by CPU: %f\n", (double) total_t);
 #endif
-	  exit(0);
+  	  exit(0);
+  exit(0);
 }
