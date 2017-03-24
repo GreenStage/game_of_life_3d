@@ -12,7 +12,7 @@ typedef struct world_stct {
 /*FUNCTIONS*/
 world_stct * init_world( int size);
 
-cell_stct * world_map(cell_stct * cell_list, int runs, int world_stct);
+cell_stct * world_map(cell_stct * cell_list, int runs, int world_size);
 
 cell_stct * next_world_gen(cell_stct *list, int world_size);
 

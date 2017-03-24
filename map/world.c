@@ -15,7 +15,7 @@ world_stct * init_world( int size){
 cell_stct * world_map(cell_stct * cell_list, int runs, int world_size){
   cell_stct * aux1, *aux2, *jump, *prev = NULL;
   Position pos, pos_nb;
-  int i, coords[3] = {0, 0, 0};
+  int i, coords[3] = {0};
 
 #ifdef DEBUG
       int counter = 0;
@@ -39,28 +39,26 @@ cell_stct * world_map(cell_stct * cell_list, int runs, int world_size){
       }
 
       for(aux2 = aux1->next; aux2 != NULL; aux2 = aux2->next){
-          if(aux2->next_state == alive){ /*No need to check for neighbours in cells that are going to die*/
-            printf("\nNormal check of <%d, %d, %d>\n", aux2->x, aux2->y, aux2->z);
-            coords[0] = 0; coords[1] = 0; coords[2] = 0;
-            get_comp_coords(0, world_size, aux1->x, aux1->y, aux1->z, aux2->x, aux2->y, aux2->z, coords);
-            pos = belongs_to_diamond(coords);
-            set_neighbour(aux1, aux2, pos);
+        if(aux2->next_state == alive){ /*No need to check for neighbours in cells that are going to die*/
+          memset(coords, 0, 3*sizeof(int));
+          get_comp_coords(0, world_size, aux1->x, aux1->y, aux1->z, aux2->x, aux2->y, aux2->z, coords);
+          pos = belongs_to_diamond(coords);
+          set_neighbour(aux1, aux2, pos);
 
 #ifdef DEBUG
         if( pos != 0) printf("Cell (%d,%d,%d) is <%d> of cell (%d,%d,%d)\n",aux2->x,aux2->y,aux2->z,pos,aux1->x,aux1->y,aux1->z);
 #endif
-            if(aux1->near_border != 0 && aux2->near_border != 0){ /*Only check for near border conditions if both cells have the near_border flag set*/
-              printf("\nNear border check of <%d, %d, %d>\n", aux2->x, aux2->y, aux2->z);
-              coords[0] = 0; coords[1] = 0; coords[2] = 0;
-              get_comp_coords(1, world_size, aux1->x, aux1->y, aux1->z, aux2->x, aux2->y, aux2->z, coords);
-              pos_nb = belongs_to_diamond(coords);
-              if(pos_nb != pos)
-                set_neighbour(aux1, aux2, pos_nb);
+          if(aux1->near_border != 0 && aux2->near_border != 0){ /*Only check for near border conditions if both cells have the near_border flag set*/
+            memset(coords, 0, 3*sizeof(int));
+            get_comp_coords(1, world_size, aux1->x, aux1->y, aux1->z, aux2->x, aux2->y, aux2->z, coords);
+            pos_nb = belongs_to_diamond(coords);
+            if(pos_nb != pos)
+              set_neighbour(aux1, aux2, pos_nb);
 #ifdef DEBUG
         if( pos_nb != 0 && pos_nb != pos) printf("Near border cell (%d,%d,%d) is <%d> of cell (%d,%d,%d)\n",aux2->x,aux2->y,aux2->z,pos_nb,aux1->x,aux1->y,aux1->z);
 #endif
           }
-
+        }
       }
 
       if(runs == 1)
@@ -69,20 +67,31 @@ cell_stct * world_map(cell_stct * cell_list, int runs, int world_size){
       prev = aux1;
 
     } else if(runs != 1){
-        printf("remove cell\n");
         for(i = 0; i < 6; i++) /*Inform first neigbours that this cell has died. Put respective neighbour vector position to NULL*/
           if(aux1->first_neighbors[i] != NULL){
-            coords[0] = 0; coords[1] = 0; coords[2] = 0;
+            memset(coords, 0, 3*sizeof(int));
             get_comp_coords(0, world_size, aux1->x, aux1->y, aux1->z, aux1->first_neighbors[i]->x, aux1->first_neighbors[i]->y, aux1->first_neighbors[i]->z, coords);
             pos = belongs_to_diamond(coords);
+            if(pos == NONE){
+              memset(coords, 0, 3*sizeof(int));
+              get_comp_coords(1, world_size, aux1->x, aux1->y, aux1->z, aux1->first_neighbors[i]->x, aux1->first_neighbors[i]->y, aux1->first_neighbors[i]->z, coords);
+              pos = belongs_to_diamond(coords);
+            }
+
             set_neighbour(NULL, aux1->first_neighbors[i], pos);
           }
 
         for(i = 0; i < 18; i++)
           if(aux1->second_neighbors[i] != NULL){
-            coords[0] = 0; coords[1] = 0; coords[2] = 0; /*Restart coords to zero at every cycle to avoid collecting garbage onto the vector by accident*/
+            memset(coords, 0, 3*sizeof(int)); /*Restart coords to zero at every cycle to avoid collecting garbage onto the vector by accident*/
             get_comp_coords(0, world_size, aux1->x, aux1->y, aux1->z, aux1->second_neighbors[i]->x, aux1->second_neighbors[i]->y, aux1->second_neighbors[i]->z, coords);
             pos = belongs_to_diamond(coords);
+            if(pos == NONE){
+              memset(coords, 0, 3*sizeof(int));
+              get_comp_coords(1, world_size, aux1->x, aux1->y, aux1->z, aux1->second_neighbors[i]->x, aux1->second_neighbors[i]->y, aux1->second_neighbors[i]->z, coords);
+              pos = belongs_to_diamond(coords);
+            }
+
             set_neighbour(NULL, aux1->second_neighbors[i], pos);
           }
 
@@ -96,12 +105,6 @@ cell_stct * world_map(cell_stct * cell_list, int runs, int world_size){
         free(aux1);
         aux1 = NULL;
 
-#ifdef DEBUG
-        cell_stct *auxx;
-        if(cell_list != NULL)
-          for(auxx = cell_list; auxx != NULL; auxx = auxx->next)
-              printf("FINAL %d %d %d\n", auxx->x, auxx->y, auxx->z);
-#endif
     }
     if(runs == 1)
       break;
@@ -122,7 +125,6 @@ cell_stct * next_world_gen(cell_stct *list, int world_size){
   for(aux1 = list; aux1 != NULL; aux1 = aux1->next){
 
 #ifdef DEBUG
-
       printf("Cell list processing at next_word_gen() position %d <%d %d %d>\n", counter, aux1->x, aux1->y, aux1->z);
       counter++;
 #endif
@@ -139,7 +141,9 @@ cell_stct * next_world_gen(cell_stct *list, int world_size){
         if(cell_get_next_state(dead, second_neighbors + 1 /*current cell*/) == alive){
           coords[0] = aux1->x; coords[1] = aux1->y; coords[2] = aux1->z;
           generate_relative_coords(i, coords, world_size);
+#ifdef DEBUG
           printf("new cell at <%d, %d, %d>\n", coords[0], coords[1], coords[2]);
+#endif
           list = insert_new_cell(list, dead, coords[0], coords[1], coords[2], world_size); /*returns pointer to new cell*/
           world_map(list, 1, world_size);
         }
@@ -222,7 +226,8 @@ void get_comp_coords(int near_border, int world_size, int xcomp, int ycomp, int 
 
     if(coords[0] != 0){
       if((aux = x - world_size) >= -2)
-        coords[0] = aux - xcomp;
+        if(xcomp < 2)
+          coords[0] = aux - xcomp;
       if(x < 2)
         if((aux = xcomp - world_size) >= -2)
           coords[0] = abs(aux) + x;
@@ -230,7 +235,8 @@ void get_comp_coords(int near_border, int world_size, int xcomp, int ycomp, int 
 
     if(coords[1] != 0){
       if((aux = y - world_size) >= -2)
-        coords[1] = aux - ycomp;
+        if(ycomp < 2)
+          coords[1] = aux - ycomp;
       if(y < 2)
         if((aux = ycomp - world_size) >= -2)
           coords[1] = abs(aux) + y;
@@ -238,7 +244,8 @@ void get_comp_coords(int near_border, int world_size, int xcomp, int ycomp, int 
 
     if(coords[2] != 0){
       if((aux = z - world_size) >= -2)
-        coords[2] = (coords[2] == 0) ? coords[2] : aux - zcomp;
+        if(zcomp < 2)
+          coords[2] = aux - zcomp;
       if(z < 2)
         if((aux = zcomp - world_size) >= -2)
           coords[2] = abs(aux) + z;
@@ -255,7 +262,7 @@ void set_neighbour(cell_stct *current, cell_stct *neighbour, Position pos){
 
     case FRONT:
       if(current != NULL)
-        current->first_neighbors[0] = neighbour;
+        current->first_neighbors[0] = (current->first_neighbors[0] != NULL) ? current->first_neighbors[0] : neighbour;
       neighbour->first_neighbors[1] = current;
       break;
 

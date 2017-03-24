@@ -1,7 +1,7 @@
 #ifndef DEFS_HEADER
 #define DEFS_HEADER
 
-#define DEBUG
+
 typedef enum position {
   NONE  = 0,
   FRONT = 0b000000000001, /*1*/

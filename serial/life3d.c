@@ -44,10 +44,7 @@ int main(int argc, char * argv[]){
   for(i=0; fgets(line,MAX_LINE_SIZE,inputFile) ;i++){
     if (!sscanf(line,"%d %d %d", &x,&y,&z))
       error_exit("Error: Invalid position",ERR_INVALID_POS);
-
     world->cell_list = insert_new_cell(world->cell_list, alive, x, y, z, world->size);
-    if(world->cell_list->near_border == 1)
-      printf("Inserted near border cell\n");
   }
 
   world_map(world->cell_list, 0, world->size); /*First time neighbour mapping no cells will be removed; return value ignored*/
@@ -62,10 +59,13 @@ int main(int argc, char * argv[]){
   }
 
   cell_stct *auxx;
+  int cnt = 0;
   if(world->cell_list != NULL)
-    for(auxx = world->cell_list; auxx != NULL; auxx = auxx->next)
+    for(auxx = world->cell_list; auxx != NULL; auxx = auxx->next){
         printf("FINAL RESULT %d %d %d\n", auxx->x, auxx->y, auxx->z);
-
+        cnt++;
+      }
+  printf("TOTAL: %d\n", cnt);
   clear_map(world->cell_list);
 
   return 0;
