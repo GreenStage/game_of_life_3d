@@ -15,7 +15,7 @@ world_stct * init_world( int size){
 cell_stct * world_map(cell_stct * cell_list, int runs, int world_size){
   cell_stct * aux1, *aux2, *jump, *prev = NULL;
   Position pos, pos_nb;
-  int i, coords[3] = {0};
+  int i, j, coords[3] = {0}, second_neighbor_index[5] = {0}, second_neighbors, first_neighbors;
 
 #ifdef DEBUG
       int counter = 0;
@@ -29,16 +29,8 @@ cell_stct * world_map(cell_stct * cell_list, int runs, int world_size){
 #endif
 
     if(aux1->next_state == alive){
-      if(runs != 1)
-        aux1->state = alive;
 
-      if(aux1->visited == 1){
-        aux1->visited = 0;
-        prev = aux1;
-        continue;
-      }
-
-      for(aux2 = aux1->next; aux2 != NULL; aux2 = aux2->next){
+      for(aux2 = cell_list; aux2 != NULL; aux2 = aux2->next){
         if(aux2->next_state == alive){ /*No need to check for neighbours in cells that are going to die*/
           memset(coords, 0, 3*sizeof(int));
           get_comp_coords(0, world_size, aux1->x, aux1->y, aux1->z, aux2->x, aux2->y, aux2->z, coords);
@@ -61,102 +53,43 @@ cell_stct * world_map(cell_stct * cell_list, int runs, int world_size){
         }
       }
 
-      if(runs == 1)
-        aux1->visited = 1;
+      first_neighbors_count = 0;
+      for(i = 0; i < 6; i++){
+        if(first_neighbors[i] == NULL){
+          get_neighbours_by_key(second_neighbor_index, i);
+          second_neighbors_count = 0;
+          for(j = 0; j < 5; j++)
+            if(second_neighbors[second_neighbor_index[j]] != NULL && second_neighbors[second_neighbor_index[j]]->state != dead)
+              second_neighbors_count++;
 
+          if(cell_get_next_state(dead, second_neighbors + 1 /*current cell*/) == alive){
+            coords[0] = aux1->x; coords[1] = aux1->y; coords[2] = aux1->z;
+            generate_relative_coords(i, coords, world_size);
+            cell_list = insert_new_cell(list, dead, coords[0], coords[1], coords[2], world_size); /*returns pointer to new cell*/
+          }
+
+        } else{
+          if(first_neighbors[i]->state != dead)
+            first_neighbors_count++;
+        }
+      }
+
+      aux1->next_state = cell_get_next_state(aux1->state, first_neighbors_count);
       prev = aux1;
 
-    } else if(runs != 1){
-        for(i = 0; i < 6; i++) /*Inform first neigbours that this cell has died. Put respective neighbour vector position to NULL*/
-          if(aux1->first_neighbors[i] != NULL){
-            memset(coords, 0, 3*sizeof(int));
-            get_comp_coords(0, world_size, aux1->x, aux1->y, aux1->z, aux1->first_neighbors[i]->x, aux1->first_neighbors[i]->y, aux1->first_neighbors[i]->z, coords);
-            pos = belongs_to_diamond(coords);
-            if(pos == NONE){
-              memset(coords, 0, 3*sizeof(int));
-              get_comp_coords(1, world_size, aux1->x, aux1->y, aux1->z, aux1->first_neighbors[i]->x, aux1->first_neighbors[i]->y, aux1->first_neighbors[i]->z, coords);
-              pos = belongs_to_diamond(coords);
-            }
-
-            set_neighbour(NULL, aux1->first_neighbors[i], pos);
-          }
-
-        for(i = 0; i < 18; i++)
-          if(aux1->second_neighbors[i] != NULL){
-            memset(coords, 0, 3*sizeof(int)); /*Restart coords to zero at every cycle to avoid collecting garbage onto the vector by accident*/
-            get_comp_coords(0, world_size, aux1->x, aux1->y, aux1->z, aux1->second_neighbors[i]->x, aux1->second_neighbors[i]->y, aux1->second_neighbors[i]->z, coords);
-            pos = belongs_to_diamond(coords);
-            if(pos == NONE){
-              memset(coords, 0, 3*sizeof(int));
-              get_comp_coords(1, world_size, aux1->x, aux1->y, aux1->z, aux1->second_neighbors[i]->x, aux1->second_neighbors[i]->y, aux1->second_neighbors[i]->z, coords);
-              pos = belongs_to_diamond(coords);
-            }
-
-            set_neighbour(NULL, aux1->second_neighbors[i], pos);
-          }
+    } else{
 
         if(aux1 != cell_list)
           prev->next = aux1->next;
         else
           cell_list = aux1->next;
 
-        free(aux1->first_neighbors);
-        free(aux1->second_neighbors);
         free(aux1);
         aux1 = NULL;
-
     }
-    if(runs == 1)
-      break;
   }
 
   return cell_list;
-}
-
-cell_stct * next_world_gen(cell_stct *list, int world_size){
-  cell_stct *aux1;
-  int i, j, first_neighbors = 0, second_neighbors = 0, second_neighbor_index[5];
-  int coords[3] = {0};
-
-#ifdef DEBUG
-      int counter = 0;
-#endif
-
-  for(aux1 = list; aux1 != NULL; aux1 = aux1->next){
-
-#ifdef DEBUG
-      printf("Cell list processing at next_word_gen() position %d <%d %d %d>\n", counter, aux1->x, aux1->y, aux1->z);
-      counter++;
-#endif
-
-    first_neighbors = 0;
-    for(i = 0; i < 6; i++){
-      if(aux1->first_neighbors[i] == NULL){
-        get_neighbours_by_key(second_neighbor_index, i);
-        second_neighbors = 0;
-        for(j = 0; j < 5; j++)
-          if(aux1->second_neighbors[second_neighbor_index[j]] != NULL && aux1->second_neighbors[second_neighbor_index[j]]->state != dead)
-            second_neighbors++;
-
-        if(cell_get_next_state(dead, second_neighbors + 1 /*current cell*/) == alive){
-          coords[0] = aux1->x; coords[1] = aux1->y; coords[2] = aux1->z;
-          generate_relative_coords(i, coords, world_size);
-#ifdef DEBUG
-          printf("new cell at <%d, %d, %d>\n", coords[0], coords[1], coords[2]);
-#endif
-          list = insert_new_cell(list, dead, coords[0], coords[1], coords[2], world_size); /*returns pointer to new cell*/
-          world_map(list, 1, world_size);
-        }
-
-      } else{
-        if(aux1->first_neighbors[i]->state != dead)
-          first_neighbors++;
-      }
-    }
-
-    aux1->next_state = cell_get_next_state(aux1->state, first_neighbors);
-  }
-  return list;
 }
 
 void generate_relative_coords(int pos_index, int *coords, int world_size){
@@ -262,145 +195,145 @@ void set_neighbour(cell_stct *current, cell_stct *neighbour, Position pos){
 
     case FRONT:
       if(current != NULL)
-        current->first_neighbors[0] = (current->first_neighbors[0] != NULL) ? current->first_neighbors[0] : neighbour;
-      neighbour->first_neighbors[1] = current;
+      first_neighbors[0] = neighbour;
+      first_neighbors[1] = current;
       break;
 
     case BACK:
       if(current != NULL)
-        current->first_neighbors[1] = neighbour;
-      neighbour->first_neighbors[0] = current;
+      first_neighbors[1] = neighbour;
+      first_neighbors[0] = current;
       break;
 
     case RIGHT:
       if(current != NULL)
-        current->first_neighbors[2] = neighbour;
-      neighbour->first_neighbors[3] = current;
+      first_neighbors[2] = neighbour;
+      first_neighbors[3] = current;
       break;
 
     case LEFT:
       if(current != NULL)
-        current->first_neighbors[3] = neighbour;
-      neighbour->first_neighbors[2] = current;
+      first_neighbors[3] = neighbour;
+      first_neighbors[2] = current;
       break;
 
     case UP:
       if(current != NULL)
-        current->first_neighbors[4] = neighbour;
-      neighbour->first_neighbors[5] = current;
+      first_neighbors[4] = neighbour;
+      first_neighbors[5] = current;
       break;
 
     case DOWN:
       if(current != NULL)
-        current->first_neighbors[5] = neighbour;
-      neighbour->first_neighbors[4] = current;
+      first_neighbors[5] = neighbour;
+      first_neighbors[4] = current;
       break;
 
     case U1_L1:
       if(current != NULL)
-      current->second_neighbors[0] = neighbour;
-      neighbour->second_neighbors[5] = current;
+      second_neighbors[0] = neighbour;
+      second_neighbors[5] = current;
       break;
 
     case U1_R1:
     if(current != NULL)
-      current->second_neighbors[1] = neighbour;
-      neighbour->second_neighbors[4] = current;
+    second_neighbors[1] = neighbour;
+    second_neighbors[4] = current;
       break;
 
     case U1_F1:
     if(current != NULL)
-      current->second_neighbors[2] = neighbour;
-      neighbour->second_neighbors[7] = current;
+      second_neighbors[2] = neighbour;
+      second_neighbors[7] = current;
       break;
 
     case U1_B1:
     if(current != NULL)
-      current->second_neighbors[3] = neighbour;
-      neighbour->second_neighbors[6] = current;
+      second_neighbors[3] = neighbour;
+      second_neighbors[6] = current;
       break;
 
     case D1_L1:
     if(current != NULL)
-      current->second_neighbors[4] = neighbour;
-      neighbour->second_neighbors[1] = current;
+      second_neighbors[4] = neighbour;
+      second_neighbors[1] = current;
       break;
 
     case D1_R1:
     if(current != NULL)
-      current->second_neighbors[5] = neighbour;
-      neighbour->second_neighbors[0] = current;
+      second_neighbors[5] = neighbour;
+      second_neighbors[0] = current;
       break;
 
     case D1_F1:
     if(current != NULL)
-      current->second_neighbors[6] = neighbour;
-      neighbour->second_neighbors[3] = current;
+      second_neighbors[6] = neighbour;
+      second_neighbors[3] = current;
       break;
 
     case D1_B1:
     if(current != NULL)
-      current->second_neighbors[7] = neighbour;
-      neighbour->second_neighbors[2] = current;
+      second_neighbors[7] = neighbour;
+      second_neighbors[2] = current;
       break;
 
     case B1_L1:
     if(current != NULL)
-      current->second_neighbors[8] = neighbour;
-      neighbour->second_neighbors[11] = current;
+      second_neighbors[8] = neighbour;
+      second_neighbors[11] = current;
       break;
 
     case B1_R1:
     if(current != NULL)
-      current->second_neighbors[9] = neighbour;
-      neighbour->second_neighbors[10] = current;
+      second_neighbors[9] = neighbour;
+      second_neighbors[10] = current;
       break;
 
     case F1_L1:
     if(current != NULL)
-      current->second_neighbors[10] = neighbour;
-      neighbour->second_neighbors[9] = current;
+      second_neighbors[10] = neighbour;
+      second_neighbors[9] = current;
       break;
 
     case F1_R1:
     if(current != NULL)
-      current->second_neighbors[11] = neighbour;
-      neighbour->second_neighbors[8] = current;
+      second_neighbors[11] = neighbour;
+      second_neighbors[8] = current;
       break;
 
     case F2:
     if(current != NULL)
-      current->second_neighbors[12] = neighbour;
-      neighbour->second_neighbors[13] = current;
+      second_neighbors[12] = neighbour;
+      second_neighbors[13] = current;
       break;
 
     case B2:
     if(current != NULL)
-      current->second_neighbors[13] = neighbour;
-      neighbour->second_neighbors[12] = current;
+      second_neighbors[13] = neighbour;
+      second_neighbors[12] = current;
       break;
 
     case R2:
     if(current != NULL)
-      current->second_neighbors[14] = neighbour;
-      neighbour->second_neighbors[15] = current;
+      second_neighbors[14] = neighbour;
+      second_neighbors[15] = current;
       break;
 
     case L2:
     if(current != NULL)
-      current->second_neighbors[15] = neighbour;
-      neighbour->second_neighbors[14] = current;
+      second_neighbors[15] = neighbour;
+      second_neighbors[14] = current;
       break;
 
     case U2:
     if(current != NULL)
-      current->second_neighbors[16] = neighbour;
-      neighbour->second_neighbors[17] = current;
+      second_neighbors[16] = neighbour;
+      second_neighbors[17] = current;
       break;
     case D2:
     if(current != NULL)
-      current->second_neighbors[17] = neighbour;
-      neighbour->second_neighbors[16] = current;
+      second_neighbors[17] = neighbour;
+      second_neighbors[16] = current;
       break;
 
     default:
