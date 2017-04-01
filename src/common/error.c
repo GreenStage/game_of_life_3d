@@ -6,7 +6,7 @@ void error_exit(char * errmsg, int errno){
   printf("%s \n",errmsg);
 
   if(errno < MAX_ARG_ERROR){
-    printf("Usage: 'life3d <input file> <geneations>' \n");
+    printf("Usage: 'life3d <input file> <generations>' \n");
     printf("       input file must exist in the same directory and have a .in extension, \n");
     printf("       generations must be a non-zero integer. \n");
   }

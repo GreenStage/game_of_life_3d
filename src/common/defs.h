@@ -1,7 +1,7 @@
 #ifndef DEFS_HEADER
 #define DEFS_HEADER
+
 #define DEBUG_TIME
-#define DEBUG
 
 typedef enum bool_ { false = 0, true } bool;
 typedef enum mirror_ {
@@ -47,6 +47,7 @@ typedef enum rel_position {
 	U1_B1 = UP | BACK,
 	D1_F1 = DOWN | FRONT
 }relative_position;
+typedef struct _pos_ { int x,y,z;} pos_;
 
 #define MAX_LINE_SIZE 200
 #define ABSOLUTE(Y) ( (Y)  < (0) ? (-Y) : (Y) )
