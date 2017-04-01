@@ -1,3 +1,4 @@
+3D Game of Life
 
 Parallel and Distributed Computation project by: 
 Afonso Fernandes, Eduardo Gomes (GreenStage), João Amado (amadilsons)
