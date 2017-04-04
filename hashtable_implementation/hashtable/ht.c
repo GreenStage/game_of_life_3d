@@ -8,6 +8,7 @@ World *  ht_initialize(int size, int world_size){
   World *new = (World *) malloc(sizeof(World));
   new->world_size = world_size;
   new->table_size = size;
+  new->live_cells = 0;
   new->hashtable = (Cell **) malloc(size*sizeof(Cell *));
   memset(new->hashtable, 0, size*sizeof(Cell *));
 
@@ -64,19 +65,6 @@ Cell* ht_remove_entry(Cell *head, Cell *rm, Cell *rm_prev){
   return updated_head;
 }
 
-void ht_find_remove_entry(Cell **hashtable, int table_size, int *coords){
-  Cell *aux, *prev;
-  int hash = hash_code(coords, table_size);
-
-  prev = NULL;
-  if(hashtable[hash] != NULL)
-    for(aux = hashtable[hash]; aux != NULL; aux = aux->next){
-      if(aux->coords[0] == coords[0] && aux->coords[1] == coords[1] && aux->coords[2] == coords[2])
-        hashtable[hash] = ht_remove_entry(hashtable[hash], aux, prev);
-
-      prev = aux;
-    }
-}
 
 void ht_clear(World *world){
   int i;

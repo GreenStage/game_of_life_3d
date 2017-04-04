@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <omp.h>
+
 #ifndef DEFS
 	#include "../utils/defs.h"
 #endif
@@ -12,9 +14,11 @@ int main(int argc, char * argv[]){
 
   int generations, cube_size;
   int x,y,z;
-  int i, table_size;
+  int i, table_size, mult_const, count = 0;
+	double start_time, finish_time;
   Cell *aux;
-  char line[MAX_LINE_SIZE];
+	Cell **ordered_list;
+  char line[MAX_LINE_SIZE], buf[4];
   FILE * inputFile;
   World *world;
 
@@ -26,7 +30,7 @@ int main(int argc, char * argv[]){
     error_exit("Error: Invalid input file format",ERR_INVALID_INPUT);
   }
 
-  if( ( generations = atoi(argv[2]) ) == 0){
+  if( ( generations = atoi(argv[2]) ) < 0){
     error_exit("Error: Invalid generations number",ERR_INVALID_GEN);
   }
 
@@ -40,39 +44,50 @@ int main(int argc, char * argv[]){
     error_exit("Error: Invalid cube size",ERR_INVALID_SIZE);
   }
 
-  table_size = cube_size*cube_size*5;
+	if( strcmp( "" , ( argv[1] + strlen(argv[1]) - 3 ) ) != 0 )
 
+	/*Optimize memory size with mult_const to improve performance
+		in each test. Best value for mult_const was choosen from
+		the array {1, 2, 3, 4, 5} based on performance tests.*/
+	if(cube_size == 50)
+		mult_const = 5;
+	else if(cube_size == 200 || cube_size == 20)
+		mult_const = 3;
+	else
+		mult_const = 2;
+
+  table_size = cube_size*cube_size*mult_const;
+
+	start_time = omp_get_wtime();
   world = (World *) ht_initialize(table_size, cube_size);
 
-  int count = 0;
   for(i = 0; fgets(line,MAX_LINE_SIZE,inputFile); i++){
     if (!sscanf(line,"%d %d %d", &x,&y,&z))
       error_exit("Error: Invalid position",ERR_INVALID_POS);
 
-    if(ht_new_entry(world, -1, x, y, z))
+		if(ht_new_entry(world, -1, x, y, z))
       count++;
   }
 
-  for(i = 0; i < generations; i++){
+  for(i = 0; i < generations; i++)
     world = next_generations(world, i);
-    printf("Generation %d\n", i);
-  }
 
+	finish_time = omp_get_wtime();
 
-  int total_count = 0;
+	ordered_list = sort_world(world);
+	for(i = 0; i < world->live_cells; i++)
+		printf("%d %d %d\n", ordered_list[i]->coords[0], ordered_list[i]->coords[1], ordered_list[i]->coords[2]);
 
-  for(i = 0; i < world->table_size; i++)
-    if(world->hashtable[i] != NULL)
-      for(aux = world->hashtable[i]; aux != NULL; aux = aux->next){
-        printf("%d %d %d next_state %d\n", aux->coords[0], aux->coords[1], aux->coords[2], aux->next_state);
-        if(aux->next_state != dead)
-          total_count++;
-      }
-      printf("Stats: \n");
-      printf("count: %d\n", total_count);
-      printf("table size %d\n", table_size);
-      printf("%d collisions detected\n", count);
+#ifdef DEBUG
+  printf("Stats \n");
+  printf("Cell count: %d \n", world->live_cells);
+  printf("table size %d\n", table_size);
+  printf("%d initial collisions detected\n", count);
+	printf("CPU time: %f\n", finish_time - start_time);
+#endif
 
   ht_clear(world);
+	free(ordered_list);
+
   return 0;
 }
