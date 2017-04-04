@@ -50,82 +50,82 @@ int cell_get_coord_dif(int a, int b, int size, int type){
 
 int cell_get_index_by_relative(relative_position pos) {
 	switch (pos) {
-	case FRONT:
-		return 0;
-		break;
-	case BACK:
-		return 1;
-		break;
-	case RIGHT:
-		return 2;
-		break;
-	case LEFT:
-		return 3;
-		break;
-	case UP:
-		return 4;
-		break;
-	case DOWN:
-		return 5;
-		break;
-	case F2:
-		return 6;
-		break;
-	case B2:
-		return 7;
-		break;
-	case R2:
-		return 8;
-		break;
-	case L2:
-		return 9;
-		break;
-	case U2:
-		return 10;
-		break;
-	case D2:
-		return 11;
-		break;
-	case F1_L1:
-		return 12;
-		break;
-	case B1_R1:
-		return 13;
-		break;
-	case F1_R1:
-		return 14;
-		break;
-	case B1_L1:
-		return 15;
-		break;
-	case U1_L1:
-		return 16;
-		break;
-	case D1_R1:
-		return 17;
-		break;
-	case U1_R1:
-		return 18;
-		break;
-	case D1_L1:
-		return 19;
-		break;
-	case U1_F1:
-		return 20;
-		break;
-	case D1_B1:
-		return 21;
-		break;
-	case U1_B1:
-		return 22;
-		break;
-	case D1_F1:
-		return 23;
-		break;
+  	case FRONT:
+  		return 0;
+  		break;
+  	case BACK:
+  		return 1;
+  		break;
+  	case RIGHT:
+  		return 2;
+  		break;
+  	case LEFT:
+  		return 3;
+  		break;
+  	case UP:
+  		return 4;
+  		break;
+  	case DOWN:
+  		return 5;
+  		break;
+  	case F2:
+  		return 6;
+  		break;
+  	case B2:
+  		return 7;
+  		break;
+  	case R2:
+  		return 8;
+  		break;
+  	case L2:
+  		return 9;
+  		break;
+  	case U2:
+  		return 10;
+  		break;
+  	case D2:
+  		return 11;
+  		break;
+  	case F1_L1:
+  		return 12;
+  		break;
+  	case B1_R1:
+  		return 13;
+  		break;
+  	case F1_R1:
+  		return 14;
+  		break;
+  	case B1_L1:
+  		return 15;
+  		break;
+  	case U1_L1:
+  		return 16;
+  		break;
+  	case D1_R1:
+  		return 17;
+  		break;
+  	case U1_R1:
+  		return 18;
+  		break;
+  	case D1_L1:
+  		return 19;
+  		break;
+  	case U1_F1:
+  		return 20;
+  		break;
+  	case D1_B1:
+  		return 21;
+  		break;
+  	case U1_B1:
+  		return 22;
+  		break;
+  	case D1_F1:
+  		return 23;
+  		break;
 
-	default:
-		return -1;
-		break;
+  	default:
+  		return -1;
+  		break;
 	}
 }
 relative_position cell_get_relative_to_neighbor(relative_position pos_to_cell, relative_position pos_to_neighbor){
@@ -249,7 +249,7 @@ int  cell_get_diamond_index(cell_ptr cell1, cell_ptr ref,pos_ xydif, int map_siz
   int distance;
   int retval = -1;
   int coord_dif[3] =  { xydif.x,
-						xydif.y,
+						            xydif.y,
                         cell_get_coord_dif(cell1->pos.z, ref->pos.z,map_size, 0)};
 
   if(abs(coord_dif[0]) + abs(coord_dif[1]) + abs(coord_dif[2])  == 0)
@@ -266,6 +266,7 @@ int  cell_get_diamond_index(cell_ptr cell1, cell_ptr ref,pos_ xydif, int map_siz
 #ifdef DEBUG
   printf("coord_dif : [%d,%d,%d]\n ",coord_dif[0],coord_dif[1],coord_dif[2]);
 #endif
+
 	if (coord_dif[0] == 1 && coord_dif[1] == 0 && coord_dif[2] == 0) retval			= 0;
 	else if (coord_dif[0] == -1 && coord_dif[1] == 0 && coord_dif[2] == 0) retval	= 1;
 	else if (coord_dif[0] == 0 && coord_dif[1] == 1 && coord_dif[2] == 0) retval	= 2;
