@@ -1,6 +1,6 @@
 #define DEFS
 
-#define DEBUG
+//#define DEBUG
 
 typedef enum state {dead = 0, alive = 1} State;
 
