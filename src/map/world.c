@@ -236,8 +236,9 @@ void world_get_next_gen(){
 	if (cell_get_state(aux1) != alive) continue;
 
     for(neighbors_count = 0, it3 = 0; it3 < 6; it3 ++){
-		aux2 = cell_get_neighbor(aux1, it3);
-		if( cell_exists( aux2 ) && cell_get_state( aux2 ) == alive ) neighbors_count ++;
+		    aux2 = cell_get_neighbor(aux1, it3);
+		    if( cell_exists( aux2 ) && cell_get_state( aux2 ) == alive )
+          neighbors_count ++;
     }
     cell_find_next_state(aux1,neighbors_count);
 
