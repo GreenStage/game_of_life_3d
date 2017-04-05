@@ -5,6 +5,18 @@ World * next_generations(World *world, int generation){
   int live_cells = 0;
   Cell *aux, *prev, *jump, *aux1, *aux2;
 
+  /*Open MP notes: parallelize outter loop;
+  private(prev, aux, neighbour_1i, neighbour_2i, neighbour_1count, neighbour_2count),
+  private(aux1, aux2, jump),
+  ??right command?? reduce(live_cells, add) or atomic(live_cells),#pragme omp atomic ensures that a specific storage location is updated
+  atomically, rather than exposing it to the possibility of multiple,
+  simultaneous writing threads.
+  shared(world).
+  Problems:
+  how to solve load balancing; hashtable isn't uniformly filled,
+  what happens when some thread writes on the hashtable?? ; every thread needs to see changes made before proceeding --
+  to analize next cell; locks, #pragma omp critical;
+  */
   for(i = 0; i < world->table_size; i++){
 
     prev = NULL;
@@ -59,6 +71,7 @@ World * next_generations(World *world, int generation){
     }/*inner for*/
   }
 
+  /*Place Open MP barrier*/
   world->live_cells = live_cells;
   return world;
 }
