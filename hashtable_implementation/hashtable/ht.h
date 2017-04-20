@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <omp.h>
 
 typedef struct table_entry_{
   int *coords;
@@ -20,7 +19,6 @@ typedef struct hash_table_{
   int world_size;
   int table_size;
 	int live_cells;
-	omp_lock_t *hashtable_locks;
   struct table_entry_ **hashtable;
 }World;
 
@@ -33,7 +31,7 @@ int ht_new_entry(World *ht, int generation, int x, int y, int z);
 
 /*Returns pointer to the cell at the position specified by @coords.
 Returns NULL if the cell is not on the list*/
-Cell* ht_find_entry(Cell **hashtable, int table_size, int *coords,  omp_lock_t *locks);
+Cell* ht_find_entry(Cell **hashtable, int table_size, int *coords);
 
 /*Removes the cell pointed by @rm from the list and frees it's
 allocated memory. Returns a pointer to the head of the list updated

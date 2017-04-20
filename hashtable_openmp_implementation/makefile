@@ -1,11 +1,11 @@
 #makefile
 
-all: life3d
-life3d: main/main.o utils/error.o world/generations.o hashtable/ht.o
-	gcc -g -std=c99 -fopenmp -o life3d main/main.o utils/error.o world/generations.o hashtable/ht.o
+all: life3d-omp
+life3d-omp: main/main.o utils/error.o world/generations.o hashtable/ht.o
+	gcc -g -std=c99 -fopenmp -o life3d-omp main/main.o utils/error.o world/generations.o hashtable/ht.o
 
-main/main.o: main/life3d.c utils/error.h utils/defs.h world/generations.h hashtable/ht.h
-	cd main && gcc -g -std=c99 -o main.o -c life3d.c && \
+main/main.o: main/life3d-omp.c utils/error.h utils/defs.h world/generations.h hashtable/ht.h
+	cd main && gcc -g -std=c99 -o main.o -c life3d-omp.c && \
 	cd ..
 
 hashtable/ht.o: hashtable/ht.c hashtable/ht.h utils/defs.h
@@ -25,4 +25,4 @@ clean:
 	cd world && rm -rf *.o && cd ..; \
 	cd utils && rm -rf *.o && cd ..; \
 	cd hashtable && rm -rf *.o && cd ..;\
-	rm -rf life3d
+	rm -rf life3d-omp

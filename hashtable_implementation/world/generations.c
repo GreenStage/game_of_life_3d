@@ -2,20 +2,11 @@
 
 World * next_generations(World *world, int generation){
   int i, coords[3] = {0}, coords1[3] = {0}, neighbour_1i, neighbour_2i, neighbour_1count, neighbour_2count;
-  int live_cells = 0, chunk;
+  int live_cells = 0;
   Cell *aux, *prev, *jump, *aux1, *aux2;
 
-if((omp_get_num_threads() == 16 && world->world_size == 50 ) || (omp_get_num_threads() == 8 && (world->world_size == 50 || world->world_size == 200)))
-  chunk = (int) (world->table_size/500);
-else
-  chunk = (int) (world->table_size/200);
-
-#pragma omp parallel if(world->table_size > PARALELLIZE) shared(world) private(aux, prev, jump, aux1, aux2, neighbour_1i, neighbour_2i, neighbour_1count, neighbour_2count) reduction(+:live_cells)
-{
-
-#pragma omp for firstprivate(coords, coords1)  schedule(static, chunk)
   for(i = 0; i < world->table_size; i++){
-#pragma omp flush(world)
+
     prev = NULL;
     for(aux = world->hashtable[i]; aux != NULL; aux = jump){
 
@@ -26,30 +17,28 @@ else
         for(neighbour_1i = 0; neighbour_1i < 6; neighbour_1i++){
           coords[0] = aux->coords[0]; coords[1] = aux->coords[1]; coords[2] = aux->coords[2]; /*re-initialize coords vector to current coords*/
           get_relative_coords(neighbour_1i, world->world_size, coords);
-          if((aux1 = ht_find_entry(world->hashtable, world->table_size, coords, world->hashtable_locks)) != NULL && aux1->generation != generation && (aux1->next_state == alive || (aux1->next_state == dead && aux1->visited == generation))){
-            neighbour_1count++;
 
-          } else if(aux1 == NULL || (aux1->next_state == dead && aux1->generation != generation && aux1->visited != generation)){ /*check if empty neighbour will be alive for the next generation*/
+          if((aux1 = ht_find_entry(world->hashtable, world->table_size, coords)) != NULL && aux1->generation != generation && (aux1->next_state == alive || (aux1->next_state == dead && aux1->visited == generation)))
+            neighbour_1count++;
+          else if(aux1 == NULL || (aux1->next_state == dead && aux1->generation != generation && aux1->visited != generation)){ /*check if empty neighbour will be alive for the next generation*/
             /*If aux1 != NULL, aux1 is the cell that is going to be tested and overwriten if necessary*/
             neighbour_2count = 0;
             for(neighbour_2i = 0; neighbour_2i < 6; neighbour_2i++){
               coords1[0] = coords[0]; coords1[1] = coords[1]; coords1[2] = coords[2];
               get_relative_coords(neighbour_2i, world->world_size, coords1);
-              if((aux2 = ht_find_entry(world->hashtable, world->table_size, coords1, world->hashtable_locks)) != NULL && aux2->generation != generation && (aux2->next_state == alive || (aux2->next_state == dead && aux2->visited == generation)))
+
+              if((aux2 = ht_find_entry(world->hashtable, world->table_size, coords1)) != NULL && aux2->generation != generation && (aux2->next_state == alive || (aux2->next_state == dead && aux2->visited == generation)))
                 neighbour_2count++;
             }
 
             if(cell_get_next_state(dead, neighbour_2count) == alive){
-              omp_set_lock(&(world->hashtable_locks[hash_code(coords, world->table_size)]));
               if(aux1 == NULL){
                 ht_new_entry(world, generation, coords[0], coords[1], coords[2]);
-                live_cells++;
-              } else{
+              }else{
                 aux1->next_state = alive;
                 aux1->generation = generation;
-                live_cells++;
               }
-              omp_unset_lock(&(world->hashtable_locks[hash_code(coords, world->table_size)]));
+              live_cells++; //count cells each time a new one is created
             }
           }
         }
@@ -60,18 +49,15 @@ else
         if(aux->next_state == alive)
             live_cells++;
 
-
-      } else if(aux->generation != generation){ /*cells that were created in this generation are not to be analized or removed*/
-        omp_set_lock(&(world->hashtable_locks[i])); /*lock hashtable entry i for update (cell removal)*/
+      } else  if(aux->generation != generation){ /*cells that were created in this generation are not to be analized or removed*/
         world->hashtable[i] = ht_remove_entry(world->hashtable[i], aux, prev);
-        omp_unset_lock(&(world->hashtable_locks[i]));
         continue; /*Update prev pointer only if current cell not removed*/
       }/*else next_state*/
 
       prev = aux;
+
     }/*inner for*/
-  }/*outter for*/
-} /*end parallel region*/
+  }
 
   world->live_cells = live_cells;
   return world;
@@ -80,11 +66,10 @@ else
 /*Insertion sort algorithm using coords x, y and z as weights*/
 Cell ** sort_world(World *world){
   Cell *aux, *swap;
-  Cell **ordered_list = (Cell**) malloc(sizeof(Cell*)*(world->live_cells + 100)); /*+ 100 to prevent creating too short vector due to wrong cell count*/
+  Cell **ordered_list = (Cell**) malloc(sizeof(Cell*)*world->live_cells);
   int i, j = 0, min = 0;
 
   /*Loop copies all cells into a world->lice_cells sized array which will be ordered*/
-  memset(ordered_list, 0, sizeof(Cell*)*(world->live_cells + 100));
   for(i = 0; i < world->table_size; i++)
     for(aux = world->hashtable[i]; aux != NULL; aux = aux->next){
       if(aux->next_state != dead){
@@ -92,10 +77,11 @@ Cell ** sort_world(World *world){
         j++;
       }
     }
-  /*Insertion sort with coords as weights*/
-  for(i = 1; i < (world->live_cells + 100) && ordered_list[i] != NULL; i++){
 
-    for(j = i; j < (world->live_cells + 100) && ordered_list[j] != NULL; j++){
+  /*Insertion sort with coords as weights*/
+  for(i = 1; i < world->live_cells; i++){
+
+    for(j = i; j < world->live_cells; j++){
       if(ordered_list[j]->coords[0] < ordered_list[min]->coords[0]){
         min = j;
       }else if(ordered_list[j]->coords[0] == ordered_list[min]->coords[0]){
@@ -117,7 +103,6 @@ Cell ** sort_world(World *world){
 
     min = i;
   }
-
   return ordered_list;
 }
 

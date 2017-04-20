@@ -13,7 +13,7 @@
 int main(int argc, char * argv[]){
 
   int generations, cube_size;
-  int x,y,z, *aux_coords = (int *) malloc(sizeof(int)*3);
+  int x,y,z;
   int i, table_size, mult_const, count = 0;
 	double start_time, finish_time;
   Cell *aux;
@@ -30,7 +30,7 @@ int main(int argc, char * argv[]){
     error_exit("Error: Invalid input file format",ERR_INVALID_INPUT);
   }
 
-  if( ( generations = atoi(argv[2]) ) < 1){
+  if( ( generations = atoi(argv[2]) ) < 0){
     error_exit("Error: Invalid generations number",ERR_INVALID_GEN);
   }
 
@@ -55,12 +55,9 @@ int main(int argc, char * argv[]){
 		mult_const = 2;
 
   table_size = cube_size*cube_size*mult_const;
-	if(table_size < PARALELLIZE)
-		table_size += 400;
 
-	world = (World *) ht_initialize(table_size, cube_size);
-
-	start_time = omp_get_wtime(); /*init time count*/
+	start_time = omp_get_wtime();
+  world = (World *) ht_initialize(table_size, cube_size);
 
   for(i = 0; fgets(line,MAX_LINE_SIZE,inputFile); i++){
     if (!sscanf(line,"%d %d %d", &x,&y,&z))
@@ -73,29 +70,10 @@ int main(int argc, char * argv[]){
   for(i = 0; i < generations; i++)
     world = next_generations(world, i);
 
-	finish_time = omp_get_wtime();
-
 	ordered_list = sort_world(world);
-	memset(aux_coords, 0, 3*sizeof(int));
-	for(i = 0; i < (world->live_cells + 100) && ordered_list[i] != NULL; i++){
-			if(i > 0 && ordered_list[i-1]->coords[0] == ordered_list[i]->coords[0])
-				if(ordered_list[i-1]->coords[1] == ordered_list[i]->coords[1])
-					if(ordered_list[i-1]->coords[2] == ordered_list[i]->coords[2])
-						continue;
-			printf("%d %d %d\n", ordered_list[i]->coords[0], ordered_list[i]->coords[1], ordered_list[i]->coords[2]);
-	}
-	free(aux_coords);
-
-#ifdef DEBUG
-	FILE *out = fopen("../test_files/out/output.txt", "w+");
-	for(i = 0; i < (world->live_cells + 100) && ordered_list[i] != NULL; i++){
-		if(i > 0 && ordered_list[i-1]->coords[0] == ordered_list[i]->coords[0])
-			if(ordered_list[i-1]->coords[1] == ordered_list[i]->coords[1])
-				if(ordered_list[i-1]->coords[2] == ordered_list[i]->coords[2])
-					continue;
-		fprintf(out, "%d %d %d\n", ordered_list[i]->coords[0], ordered_list[i]->coords[1], ordered_list[i]->coords[2]);
-	}
-#endif
+	finish_time = omp_get_wtime();
+	for(i = 0; i < world->live_cells; i++)
+		printf("%d %d %d\n", ordered_list[i]->coords[0], ordered_list[i]->coords[1], ordered_list[i]->coords[2]);
 
 #ifdef DEBUG
   printf("Stats \n");
@@ -106,8 +84,7 @@ int main(int argc, char * argv[]){
 #endif
 
   ht_clear(world);
-#ifdef DEBUG
 	free(ordered_list);
-#endif
+
   return 0;
 }
