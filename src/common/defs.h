@@ -67,6 +67,8 @@ int block_owner(int cube_size,pos_ pos,int * dim_size,MPI_Comm comm);
 int get_sizes_by_limits(int blockLimits[4], int retval[2]);
 int get_block_limits(int block_owner,int cube_size,int * dim_size, int retval[4], MPI_Comm comm);
 int arrayFilled(int * zArray,int pNumb);
+/*Translates two dimensional coordinates into a world->border vector index*/
+int coordsToArray(int peerPos, int recvX, int recvY);
 
 /* define Windows */
 #endif

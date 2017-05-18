@@ -110,7 +110,7 @@ int main(int argc, char * argv[]){
       printf("bo : %d\n",block_owner(cube_size,pos,dims_size,cart_comm));
       printf("%d\n",(int) &cell_matrix[pos.x][pos.y]);
       getchar();*/
-      cell_matrix[pos.x][pos.y] = insert_new_cell(cell_matrix[pos.x][pos.y],pos, cube_size -1);
+      cell_matrix[pos.x][pos.y] = insert_new_cell(cell_matrix[pos.x][pos.y],pos, cube_size -1, 0);
       cell_update_state(cell_matrix[pos.x][pos.y]);
 
       if(ROOT == block_owner(cube_size,pos,dims_size,cart_comm)){
@@ -172,7 +172,7 @@ int main(int argc, char * argv[]){
         break;
       MPI_Recv(world->zArray,world->sizeZ,MPI_INT,ROOT,TAG_ALERT_ZARRAY,cart_comm,&status);
 
-      world->cell_matrix[coco[0] - world->smallWorldLimits[0]][coco[1] - world->smallWorldLimits[2] ] = arrayToList(coco[0],coco[1],world->zArray,world->sizeZ);
+      world->cell_matrix[coco[0] - world->smallWorldLimits[0]][coco[1] - world->smallWorldLimits[2] ] = arrayToList(coco[0],coco[1],world->zArray,world->sizeZ, world->sizeZ, 0);
       }
 
   }

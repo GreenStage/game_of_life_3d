@@ -410,15 +410,15 @@ int * list_to_array(cell_ptr head, int x, int y, int * arraySize, int size, int 
   return retval;
 }
 
-cell_ptr arrayToList(int x,int y,int * z,int size){
+cell_ptr arrayToList(int x,int y,int * z, int buffSize, int max_pos, int startIndex){
   int it;
   pos_ aux;
   cell_ptr retval = NULL;
   aux.x = x;
   aux.y = y;
-  for(it = 0; it < size && z[it] != -1; it ++){
+  for(it = startIndex; it < buffSize && z[it] != -1; it ++){
     aux.z = z[it];
-    retval = insert_new_cell(retval,aux,size);
+    retval = insert_new_cell(retval,aux,max_pos);
   }
   return retval;
 }

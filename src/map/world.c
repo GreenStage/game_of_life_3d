@@ -387,12 +387,13 @@ int fetch_borders(int ){
   int sendXY[2];
   int rank, x, y;
   int recvCtr = 0;
-  int z_receive_flag = 0, recvBufSize;
+  int z_receive_flag = 0, recvBufSize, recvIndex;
   MPI_Request req;
   int toSendSize;
   int toSendX[4], toSendY[4];
   int peerCords[4][2];
   int peerRank[4];
+  int breakCounter = 0;
 
 
   MPI_Cart_coords(comm,world->pID,2,cords);
@@ -422,17 +423,22 @@ int fetch_borders(int ){
   toSendY[3] = 0;
 
   MPI_Irecv(recvBufZ, world->sizeZ + 2, MPI_INT, MPI_ANY_SOURCE, TAG_RPLY_Z_LST, world->comm, &Z_RPLY);
-  while(!(it = 4 && it2 = 0 && recvCtr < (2 * world->sizeX) +(2 * world->sizeY)) ){
+  for(;;){
 
     MPI_Test(&Z_RPLY, &z_receive_flag, &world->status); //check for the reception of any array
     if(z_array_flag){
 
       MPI_Get_count(world->status, MPI_INT, &recvBufSize);
-      for(it3 = 0; it3 < 4; it3++){
+      if(recvBufSize == 1){ //received message
+        if(++breakCounter == 4)
+          break;
+      }
+
+      for(it3 = 0; it3 < 4; it3++){ //it3 corresponds to a relative position of a processor: 0 up; 1 down; 2 left;3 right
         if(world->status.MPI_SOURCE == peerRank[it3]){
           //translate 2 dimensional coords to vector index
-          
-
+         recvIndex = coordsToArray(it3, recvBufZ[0], recvBufZ[1]);
+         world->border[it3].cells[recvIndex] = arrayToList(recvBufZ[0],recvBufZ[1],recvBufZ, recvBufSize, world->sizeZ, 2); //insert new cell uses recvBufSize as maxPos.. Problem??
         }
       }
       MPI_Irecv(recvBufZ, world->sizeZ + 2, MPI_INT, MPI_ANY_SOURCE, TAG_RPLY_Z_LST, world->comm, &Z_RPLY);
@@ -443,9 +449,9 @@ int fetch_borders(int ){
 
       if(it2 < (it < 2)? world->sizeX : world->sizeY){
         if(it < 2){
-          toSendX[it] ++;
+          toSendX[it]++; //iterates through the line at toSendY[it]
         } else{
-          toSendY[it]++;
+          toSendY[it]++; //iterates through the column at toSendX[it]
         }
 
         toSendSize = 2;
@@ -459,8 +465,8 @@ int fetch_borders(int ){
 
         it2++;
       } else{
-
         it2 = 0;
+        MPI_Isend(&it2, 1, MPI_INT, peerRank[it], TAG_RPLY_Z_LST, world->comm, &req); //send break signal; all cells sent to peerRank[it]
         it++;
       }
   }

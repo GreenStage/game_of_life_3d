@@ -11,8 +11,8 @@ typedef struct border_{
 struct world_stct {
   int sizeX, sizeY,sizeZ;
   int smallWorldLimits[4];
-  border borders[4];
-
+  border borders[4]; //0 up; 1 down; 2 left: 3 right
+  
   int dim_size[2];
   int pID;
   int pNumb;

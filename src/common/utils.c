@@ -58,11 +58,32 @@ int arrayFilled(int * zArray,int pNumb){
   return 1;
 }
 
-int coordsToArray(int rank, int recvCoords[2], int ownCoords[2]){
+//peerPos: 0 up; 1 down; 2 left; 3 right
+int coordsToArray(int peerPos, int recvX, int recvY){
   int index;
 
-  if(peerCoords[0] == ownCoords[0]){
-
+  switch(peerPos){
+    /*UP: received coordinates YY will always be = world->smallWorldLimits[2] - 1, so
+      the index in the world->borders[0] vector will be given by the XX coordinate*/
+    case 0:
+      index = recvX - world->smallWorldLimits[0]; //normalize
+      break;
+    case 1:
+      index = recvX -  world->smallWorldLimits[2]; //normalize
+      break;
+    /*LEFT: received coordinates XX will always be = world->smallWorldLimits[0] - 1, so
+      the index in the world->borders[2] vector will be given by the YY coordinate*/
+    case 2:
+      index = recvY -  world->smallWorldLimits[2]; //normalize
+      break;
+    case 3:
+      index = recvY -  world->smallWorldLimits[2]; //normalize
+      break;
+    default:
+      index = -1;
+      printf("SegFault at coordsToArray()\n\n");
+      break;
   }
+
   return index;
 }
