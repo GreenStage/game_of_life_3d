@@ -3,9 +3,25 @@
 #include "../common/defs.h"
 #include "cell.h"
 
+typedef struct border_{
+  cell_ptr * cells;
+  int owner;
+} border;
 
 struct world_stct {
-  int size;
+  int sizeX, sizeY,sizeZ;
+  int smallWorldLimits[4];
+  border borders[4];
+
+  int dim_size[2];
+  int pID;
+  int pNumb;
+  int * rqstArray;
+  MPI_Comm comm;
+  MPI_Status status;
+  /*Auxiliar variables*/
+  int * zArray;
+
   cell_ptr ** cell_matrix;
 
   /*Functions*/
@@ -100,8 +116,9 @@ struct world_stct * world;
 *
 * OUTPUTS :   (none)
 *******************************************************************/
-void world_init( int size);
 
+/*MPI FETCHING BORDERS*/
+void fetch_borders();
 
-
+void world_init( int sizeX, int sizeY, int sizeZ, int smallWorldLimits[4], int pid, MPI_Comm comm,int dim_size[2],int pNumb);
 #endif

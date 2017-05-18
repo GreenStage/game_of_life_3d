@@ -30,7 +30,7 @@ State cell_get_next_state(cell_ptr cell) { return cell->next_state; }
 cell_ptr cell_get_neighbor(cell_ptr cell, int i) { return cell->neighbors[i]; }
 mirror cell_is_near_border(cell_ptr cell) { return cell->near_border;}
 void cell_add_neighbor(cell_ptr cell, int i, cell_ptr neigh){  cell->neighbors[i] = neigh; }
-
+pos_ cell_get_pos(cell_ptr cell) {return cell->pos;}
 
 int cell_get_coord_dif(int a, int b, int size, int type){
   switch(type){
@@ -388,4 +388,37 @@ void cell_will_spawn_alert(cell_ptr ptr, cell_ptr owner){
 #endif /*DEBUG*/
 void cell_reset_neighbors(cell_ptr cell) {
 	memset(cell->neighbors, 0, sizeof(cell_ptr) * 24);
+}
+
+int * list_to_array(cell_ptr head, int x, int y, int * arraySize, int size, int startIndex){
+  int a;
+  int* tempBuff = (int*) calloc(size, sizeof(int));
+  int* retval;
+  cell_ptr aux = NULL;
+
+  for(aux = head, a = startIndex; aux != NULL; a++, aux = cell_get_next(aux)){
+    tempBuff[a] = cell_get_pos(aux).z;
+  }
+  if(a == 0){
+    retval == NULL;
+  } else{
+    retval = (int*) malloc(sizeof(int) * a);
+    memcpy(retval, tempBuff, a);
+  }
+  free(tempBuff);
+  *arraySize = a;
+  return retval;
+}
+
+cell_ptr arrayToList(int x,int y,int * z,int size){
+  int it;
+  pos_ aux;
+  cell_ptr retval = NULL;
+  aux.x = x;
+  aux.y = y;
+  for(it = 0; it < size && z[it] != -1; it ++){
+    aux.z = z[it];
+    retval = insert_new_cell(retval,aux,size);
+  }
+  return retval;
 }

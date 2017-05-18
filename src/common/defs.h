@@ -1,6 +1,7 @@
 #ifndef DEFS_HEADER
 #define DEFS_HEADER
 
+#include <mpi.h>
 #define DEBUG_TIME
 
 typedef enum bool_ { false = 0, true } bool;
@@ -52,6 +53,20 @@ typedef struct _pos_ { int x,y,z;} pos_;
 #define MAX_LINE_SIZE 200
 #define ABSOLUTE(Y) ( (Y)  < (0) ? (-Y) : (Y) )
 #define min_abs(A,B) ( (ABSOLUTE(A) < ABSOLUTE(B)) ? (A) : (B) )
+#define ROOT 0
+#define TAG_ALERT_SIZE 1
+#define TAG_ALERT_XY 2
+#define TAG_ALERT_ZARRAY 3
+#define TAG_RQST_Z_LST 4
+#define TAG_RPLY_Z_LST 5
+#define TAG_ALERT_END_WORLD 6
+#define TAG_ALERT_FINISHED_MAP 7
+#define TAG_BORDER_SEND 8
+
+int block_owner(int cube_size,pos_ pos,int * dim_size,MPI_Comm comm);
+int get_sizes_by_limits(int blockLimits[4], int retval[2]);
+int get_block_limits(int block_owner,int cube_size,int * dim_size, int retval[4], MPI_Comm comm);
+int arrayFilled(int * zArray,int pNumb);
 
 /* define Windows */
 #endif

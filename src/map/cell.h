@@ -26,6 +26,7 @@ bool cell_exists(cell_ptr ptr);
 bool cell_will_spawn(int neighbors);
 
 /*FETCHING FUNCTIONS*/
+pos_ cell_get_pos(cell_ptr cell);
 int cell_get_index_by_relative(relative_position pos);
 int  cell_get_diamond_index(cell_ptr cell1, cell_ptr ref, pos_ xydif, int map_size, mirror near_border);
 pos_ cell_get_absolute_pos(cell_ptr cell, int relative_position, int max_pos);
@@ -37,6 +38,9 @@ State cell_get_next_state(cell_ptr cell);
 cell_ptr cell_get_next(cell_ptr cell);
 cell_ptr cell_get_neighbor(cell_ptr cell, int i);
 cell_ptr cell_list_update_state(cell_ptr cell);
+
+int * list_to_array(cell_ptr head, int * arraySize, int size);
+cell_ptr arrayToList(int x,int y,int * z,int size);
 
 /*DEBUGGING FUNCTIONS*/
 #ifdef DEBUG

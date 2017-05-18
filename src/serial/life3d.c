@@ -14,7 +14,7 @@ int main(int argc, char * argv[]){
   pos_ pos;
   int a,i;
   char line[MAX_LINE_SIZE];
-  FILE * inputFile, * Outputfile;
+  FILE * inputFile;
   char output_file[50];
 #ifdef DEBUG_TIME
   clock_t start_t, end_t;
@@ -57,10 +57,6 @@ int main(int argc, char * argv[]){
 
   }
 
-  sprintf(output_file, "s%de%d.%d.out.txt", cube_size, a, generations);
-  if (!(Outputfile = fopen(output_file, "w")))
-	exit(1);
-
   for(i = 0; i < generations;i++){
 #ifdef DEBUG
     printf("---- Generation %d: ----------\n",i);
@@ -73,16 +69,15 @@ int main(int argc, char * argv[]){
   }
 
   world->order();
-  world->print(Outputfile);
+  world->print(stdout);
   world->destroy();
 
 #ifdef DEBUG_TIME
   end_t = clock();
   total_t = (double)( (end_t - start_t) / CLOCKS_PER_SEC );
-  fprintf(Outputfile, "Total time taken by CPU: %f\n",total_t);
+  fprintf(stdout, "Total time taken by CPU: %f\n",total_t);
 
 #endif
 
-  fclose(Outputfile);
   exit(0);
 }
