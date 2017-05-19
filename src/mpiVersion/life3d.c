@@ -16,7 +16,7 @@ int main(int argc, char * argv[]){
   int generations, cube_size = 0;
   pos_ pos;
   int a,i;
-  int id, p;
+  int id, p, rank;
   int testflag, end;
   int partSizeX, partSizeY;
   int dims_size[2];
@@ -25,6 +25,7 @@ int main(int argc, char * argv[]){
   int arraySize;
   int coco[2],xixi,bardaAe;
   int * bufZ;
+  int oo, uu, xy[2];
   MPI_Comm cart_comm;
   MPI_Status status;
   MPI_Request request;
@@ -73,6 +74,7 @@ int main(int argc, char * argv[]){
 
   if( id == ROOT){
 
+
     inputFile = fopen(argv[1], "r");
     if(inputFile == NULL){
       error_exit("Error: Cant open %s for reading",ERR_OPEN_FILE);
@@ -81,7 +83,19 @@ int main(int argc, char * argv[]){
     if (!sscanf(line,"%d", &cube_size)){
       error_exit("Error: Invalid cube size",ERR_INVALID_SIZE);
     }
-
+    printf("--------P MATRIX---------\n");
+    for(oo = 0; oo < dims_size[0]; oo++){
+      for(uu = 0; uu < dims_size[1]; uu++){
+        int a[2] = {oo,uu};
+        int rankp;
+        int limits3[4];
+        MPI_Cart_rank(cart_comm,a,&rankp);
+        get_block_limits(rankp,cube_size,dims_size,limits3,cart_comm);
+        printf("| %d  (%d, %d)(%d %d %d %d)| ",rankp, a[0], a[1],limits3[0],limits3[1],limits3[2],limits3[3]);
+      }
+      printf("\n-----------------------\n");
+    }
+    printf("\n");
     cell_matrix = (cell_ptr **) malloc(sizeof(cell_ptr*) * cube_size);
     for(i = 0; i < cube_size; i++){
         cell_matrix[i] = (cell_ptr *) malloc(sizeof(cell_ptr) * cube_size);
@@ -99,8 +113,6 @@ int main(int argc, char * argv[]){
 
     temp_pos = (pos_ *) malloc(sizeof(pos_) * cube_size);
 
-
-
     for(a=0; fgets(line,MAX_LINE_SIZE,inputFile) ;a++){
 
       if (!sscanf(line,"%d %d %d", &pos.x,&pos.y,&pos.z)){
@@ -110,9 +122,10 @@ int main(int argc, char * argv[]){
       printf("bo : %d\n",block_owner(cube_size,pos,dims_size,cart_comm));
       printf("%d\n",(int) &cell_matrix[pos.x][pos.y]);
       getchar();*/
-      cell_matrix[pos.x][pos.y] = insert_new_cell(cell_matrix[pos.x][pos.y],pos, cube_size -1, 0);
+      
+      cell_matrix[pos.x][pos.y] = insert_new_cell(cell_matrix[pos.x][pos.y],pos, cube_size -1);
       cell_update_state(cell_matrix[pos.x][pos.y]);
-
+      //printf("aiai %d %d\n",pos.x,pos.y);
       if(ROOT == block_owner(cube_size,pos,dims_size,cart_comm)){
         world->add_cell(pos);
       }
@@ -151,7 +164,7 @@ int main(int argc, char * argv[]){
 
         }
       }
-      printf("LINE %d DONE\n", i);
+      //printf("LINE %d DONE\n", i);
     }
 
     /*termination array {-1, -1}*/
@@ -164,6 +177,7 @@ int main(int argc, char * argv[]){
     MPI_Recv(blocklimits,4,MPI_INT,ROOT,TAG_ALERT_SIZE,cart_comm,&status);
     get_sizes_by_limits(blocklimits,coco);
     world_init(coco[0],coco[1],cube_size, blocklimits,id,cart_comm,dims_size,p);
+    printf("[%d] world size %d %d\n",world->pID,world->sizeX,world->sizeY);
 
     for(;;){
       memset(world->zArray, -1, world->sizeZ);
@@ -173,38 +187,49 @@ int main(int argc, char * argv[]){
       MPI_Recv(world->zArray,world->sizeZ,MPI_INT,ROOT,TAG_ALERT_ZARRAY,cart_comm,&status);
 
       world->cell_matrix[coco[0] - world->smallWorldLimits[0]][coco[1] - world->smallWorldLimits[2] ] = arrayToList(coco[0],coco[1],world->zArray,world->sizeZ, world->sizeZ, 0);
-      }
+    }
+    
 
   }
 
-  MPI_Finalize();
-  return 0;
-
+//printf("%d %d \n smallWorldFrontiers x[%d %d] y[%d %d] ", world->sizeX, world->sizeY, world->smallWorldLimits[0], world->smallWorldLimits[1], world->smallWorldLimits[2],world->smallWorldLimits[3]);
   for(i = 0; i < generations;i++){
-#ifdef DEBUG
-    printf("---- Generation %d: ----------\n",i);
-    printf("\n");
-#endif
+   // printf("[%d] [%d] FETCH_start\n",world->pID,i);
+    MPI_Barrier(world->comm);
     world->fetch_borders();
-    world->respond_borders();
-    MPI_Barrier();
-
+  //  printf("[%d] [%d] FETCH_DONE\n",world->pID,i);
     world->map();
+  //  printf("[%d] [%d] MAPDONE\n",world->pID,i);
     world->get_next_gen();
     world->update_gen();
   }
+  i = 1;
 
   world->order();
-  world->print(stdout);
-  world->destroy();
+  MPI_Barrier(world->comm);
+
+  for(xy[0] = 0; xy[0] < dims_size[0]; xy[0]++){
+    for(a = 0; a < world->sizeX; a++){
+      for(xy[1] = 0; xy[1] < dims_size[1]; xy[1]++){
+        MPI_Cart_rank(world->comm, xy, &rank);
+        if(rank == world->pID){
+          world->print_line(a);
+        }  
+        MPI_Barrier(world->comm);
+      }
+    }
+
+  }
+
 
 #ifdef DEBUG_TIME
   end_t = clock();
   total_t = (double)( (end_t - start_t) / CLOCKS_PER_SEC );
-  fprintf(stdout, "Total time taken by CPU: %f\n",total_t);
+  if(world->pID == ROOT)
+    fprintf(stdout, "Total time taken by CPU: %f\n",total_t);
 
 #endif
-
+  MPI_Finalize();
   exit(0);
 
 }

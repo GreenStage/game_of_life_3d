@@ -39,7 +39,7 @@ cell_ptr cell_get_next(cell_ptr cell);
 cell_ptr cell_get_neighbor(cell_ptr cell, int i);
 cell_ptr cell_list_update_state(cell_ptr cell);
 
-int * list_to_array(cell_ptr head, int * arraySize, int size);
+int * list_to_array(cell_ptr head, int * arraySize, int size, int startIndex);
 cell_ptr arrayToList(int x,int y,int * z, int buffSize, int max_pos, int startIndex);
 
 /*DEBUGGING FUNCTIONS*/

@@ -62,13 +62,15 @@ typedef struct _pos_ { int x,y,z;} pos_;
 #define TAG_ALERT_END_WORLD 6
 #define TAG_ALERT_FINISHED_MAP 7
 #define TAG_BORDER_SEND 8
+#define TAG_PRINT 9
+#define TAG_END 10
 
 int block_owner(int cube_size,pos_ pos,int * dim_size,MPI_Comm comm);
 int get_sizes_by_limits(int blockLimits[4], int retval[2]);
 int get_block_limits(int block_owner,int cube_size,int * dim_size, int retval[4], MPI_Comm comm);
 int arrayFilled(int * zArray,int pNumb);
 /*Translates two dimensional coordinates into a world->border vector index*/
-int coordsToArray(int peerPos, int recvX, int recvY);
+int coordsToArray(int peerPos, int recvX, int recvY, int smallWorldLimits0, int smallWorldLimits1);	
 
 /* define Windows */
 #endif

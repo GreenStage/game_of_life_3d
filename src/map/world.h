@@ -12,7 +12,7 @@ struct world_stct {
   int sizeX, sizeY,sizeZ;
   int smallWorldLimits[4];
   border borders[4]; //0 up; 1 down; 2 left: 3 right
-  
+  int test,test2;
   int dim_size[2];
   int pID;
   int pNumb;
@@ -103,6 +103,8 @@ struct world_stct {
   * OUTPUTS :   (none)
   *******************************************************************/
   void (*print)(FILE * file);
+  void (*print_line)(int lineIndex);
+  void (*fetch_borders)();
 };
 /*Define global pointer to world structure*/
 struct world_stct * world;
@@ -116,6 +118,7 @@ struct world_stct * world;
 *
 * OUTPUTS :   (none)
 *******************************************************************/
+
 
 /*MPI FETCHING BORDERS*/
 void fetch_borders();

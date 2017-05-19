@@ -7,11 +7,17 @@ int block_owner(int cube_size,pos_ pos,int * dim_size,MPI_Comm comm){
   int normSizeX, normSizeY;
 
   normSizeX = cube_size / dim_size[0];
+  
   normSizeY = cube_size / dim_size[1];
 
   for(i[0] = 0; i[0] < dim_size[0]; i[0]++){
     if( (i[0] + 1) * normSizeX > pos.x){
       break;
+    }
+    else if(i[0] + 1== dim_size[0]){
+      if(cube_size > pos.x){
+        break;
+      }
     }
   }
 
@@ -19,8 +25,13 @@ int block_owner(int cube_size,pos_ pos,int * dim_size,MPI_Comm comm){
     if( (i[1] + 1) * normSizeY > pos.y){
       break;
     }
+    else if(i[1] + 1 == dim_size[1]){
+      if(cube_size > pos.y){
+        break;
+      }
+    }
   }
-
+  
   return (MPI_ERR_TOPOLOGY == MPI_Cart_rank(comm,i,&retval) ) ? -1 : retval;
 }
 
@@ -59,29 +70,29 @@ int arrayFilled(int * zArray,int pNumb){
 }
 
 //peerPos: 0 up; 1 down; 2 left; 3 right
-int coordsToArray(int peerPos, int recvX, int recvY){
+int coordsToArray(int peerPos, int recvX, int recvY, int smallWorldLimits0, int smallWorldLimits1){
   int index;
 
   switch(peerPos){
     /*UP: received coordinates YY will always be = world->smallWorldLimits[2] - 1, so
       the index in the world->borders[0] vector will be given by the XX coordinate*/
     case 0:
-      index = recvX - world->smallWorldLimits[0]; //normalize
+      index = recvX ;//- smallWorldLimits0; //normalize
       break;
     case 1:
-      index = recvX -  world->smallWorldLimits[2]; //normalize
+      index = recvX ;//- smallWorldLimits0; //normalize
       break;
     /*LEFT: received coordinates XX will always be = world->smallWorldLimits[0] - 1, so
       the index in the world->borders[2] vector will be given by the YY coordinate*/
     case 2:
-      index = recvY -  world->smallWorldLimits[2]; //normalize
+      index = recvY;// - smallWorldLimits1; //normalize
       break;
     case 3:
-      index = recvY -  world->smallWorldLimits[2]; //normalize
+      index = recvY ;//- smallWorldLimits1; //normalize
       break;
     default:
       index = -1;
-      printf("SegFault at coordsToArray()\n\n");
+      printf("SegFault at coordsToArray() with peerPos = %d\n\n", peerPos);
       break;
   }
 

@@ -390,7 +390,7 @@ void cell_reset_neighbors(cell_ptr cell) {
 	memset(cell->neighbors, 0, sizeof(cell_ptr) * 24);
 }
 
-int * list_to_array(cell_ptr head, int x, int y, int * arraySize, int size, int startIndex){
+int * list_to_array(cell_ptr head, int * arraySize, int size, int startIndex){
   int a;
   int* tempBuff = (int*) calloc(size, sizeof(int));
   int* retval;
@@ -399,11 +399,11 @@ int * list_to_array(cell_ptr head, int x, int y, int * arraySize, int size, int 
   for(aux = head, a = startIndex; aux != NULL; a++, aux = cell_get_next(aux)){
     tempBuff[a] = cell_get_pos(aux).z;
   }
-  if(a == 0){
-    retval == NULL;
+  if(a == startIndex){
+    retval = NULL;
   } else{
-    retval = (int*) malloc(sizeof(int) * a);
-    memcpy(retval, tempBuff, a);
+    retval = (int*) calloc(a,sizeof(int));
+    memcpy(retval, tempBuff, a * sizeof(int));
   }
   free(tempBuff);
   *arraySize = a;
