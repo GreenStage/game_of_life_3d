@@ -576,29 +576,19 @@ void fetch_borders(){
             recvIndex = coordsToArray(it3, recvBufZ[0], recvBufZ[1], world->smallWorldLimits[0], world->smallWorldLimits[2]);
             desnormalize(&recvBufZ[0],&recvBufZ[1]);
 
-
-            world->borders[recvBufZ[2]].cells[recvIndex] = arrayToList(recvBufZ[0],recvBufZ[1],recvBufZ, recvBufSize, world->sizeZ, 3); //insert new cell uses recvBufSize as maxPos.. Problem??
-            if(recvIndex == 0){
-                           // printf("XIXIXI\n");
-               memset(world->borders[recvBufZ[2]].corners[0].zArray,0,sizeof(int) * world->sizeZ);
-               for(it6 = 3; it6 < recvBufSize;it6++){
-                world->borders[recvBufZ[2]].corners[0].zArray[recvBufZ[it6]] = 1;
-               }
-               
+            switch(recvBufZ[2]){
+              case 0:
+                world->cell_matrix[recvIndex +1][0] = arrayToList(recvBufZ[0],recvBufZ[1],recvBufZ, recvBufSize, world->sizeZ, 3); //insert new cell uses recvBufSize as maxPos.. Problem??} 
+                break;
+              case 1:
+                world->cell_matrix[recvIndex +1][world->sizeX -1] = arrayToList(recvBufZ[0],recvBufZ[1],recvBufZ, recvBufSize, world->sizeZ, 3); //insert new cell uses recvBufSize as maxPos.. Problem??} 
+                break; 
+              case 2:
+                world->cell_matrix[0][recvIndex] = arrayToList(recvBufZ[0],recvBufZ[1],recvBufZ, recvBufSize, world->sizeZ, 3); //insert new cell uses recvBufSize as maxPos.. Problem??} 
+                break;   
+              case           
             }
-            else if(recvBufZ[2] >= 2 && recvIndex == world->sizeY-1 ){
-              memset(world->borders[recvBufZ[2]].corners[1].zArray,0,sizeof(int) * world->sizeZ);
-              for(it6 = 3; it6 < recvBufSize;it6++){
-                world->borders[recvBufZ[2]].corners[1].zArray[recvBufZ[it6]] = 1;
-              }
-            }
-            else if(recvBufZ[2] < 2 && recvIndex ==  world->sizeX-1){
-              memset(world->borders[recvBufZ[2]].corners[1].zArray,0,sizeof(int) * world->sizeZ);
-              for(it6 = 3; it6 < recvBufSize;it6++){
-                world->borders[recvBufZ[2]].corners[1].zArray[recvBufZ[it6]] = 1;
-              }
-            }
-    } 
+            
         } 
         MPI_Irecv(recvBufZ, world->sizeZ + 2, MPI_INT, MPI_ANY_SOURCE, TAG_RPLY_Z_LST, world->comm, &Z_RPLY);
       }
