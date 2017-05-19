@@ -3,10 +3,16 @@
 #include "../common/defs.h"
 #include "cell.h"
 
+typedef struct corner_{
+  int * zArray;
+} corner;
+
 typedef struct border_{
   cell_ptr * cells;
+  corner corners[2];
   int owner;
 } border;
+
 
 struct world_stct {
   int sizeX, sizeY,sizeZ;

@@ -149,9 +149,9 @@ cell_ptr world_get_next_list(int x, int y,int it){
     return world->cell_matrix[x][y];
   }
 
-  else if(a >= 0 && a < world->sizeX && b >= 0 & b < world->sizeY){
+ /* else if(a >= 0 && a < world->sizeX && b >= 0 & b < world->sizeY){
     return world->cell_matrix[a][b];
-  }
+  }*/
 
   else if(a == -1 && b >=  0 && b < world->sizeY){
     return world->borders[2].cells[b];
@@ -227,6 +227,42 @@ void world_add_cell(pos_ pos){
 
 }
 
+void get_common_corner(int it,int * retval, int *b1Index, int *c1Index,  int *b2Index,int *c2Index){
+  switch(it){
+    case 0:
+      retval[0] =0;
+      retval[1] =0;
+      *b1Index = 0;
+      *c1Index = 0;
+      *b2Index = 2;
+      *c2Index = 0;
+      break;
+    case 1:
+      retval[0] =world->sizeX -1;
+      retval[1] =0;
+      *b1Index = 0;
+      *c1Index = 1;
+      *b2Index = 3;
+      *c2Index = 0;   
+      break;
+    case 2:
+      retval[0] = 0;
+      retval[1] = world->sizeY -1;
+      *b1Index = 1;
+      *c1Index = 0;
+      *b2Index = 2;
+      *c2Index = 1;   
+      break;
+    default:
+      retval[0] = world->sizeX -1;
+      retval[1] = world->sizeY -1;
+      *b1Index = 1;
+      *c1Index = 1;
+      *b2Index = 3;
+      *c2Index = 1;   
+      break;
+  }
+}
 
 void world_map(){
   int it1, it2, it3;
@@ -281,18 +317,30 @@ void world_map(){
     
   }
 }
-
+void list_to_bool(int *arr,cell_ptr head){
+  cell_ptr aux;
+  for(aux = head; cell_exists(aux);aux = cell_get_next(aux)){
+    arr[cell_get_pos(aux).z] = 1;
+  }
+}
 
 void world_get_next_gen(){
+  int b1,b2;
+  int * auxCorner;
   int it1,it2;
   int it3, it4, it5;
+  int itc,notAdd; 
+  int ita,itb;
+  int c1,c2;
   int index,v;
   int xNorm, yNorm;
   int neighbors_count;
   int neighbor_neigh[5];
-  cell_ptr aux,aux1,aux2;
+  int cornersA[2];
+  cell_ptr aux,aux1,aux2,aux5;
   mirror border = near_none;
   pos_ pos_aux;
+  auxCorner = (int*) calloc(world->sizeZ,sizeof(int));
   for(it1= 0, it2 = 0, aux1 = world->cell_matrix[0][0]; it1 < world->sizeX; aux1 = cell_get_next(aux1)){
 
 	while (!cell_exists(aux1)) {
@@ -360,7 +408,6 @@ void world_get_next_gen(){
             }
           }
 #ifdef DEBUG
-
           cell_will_spawn_alert(  world->cell_matrix[pos_aux.x][pos_aux.y],aux1);
 #endif
         }
@@ -368,7 +415,32 @@ void world_get_next_gen(){
     }
 
   }
+  for(ita = 0; ita < 4;ita ++){
 
+     memset(auxCorner,0,sizeof(int) * world->sizeZ);
+     get_common_corner(ita,cornersA,&b1,&c1,&b2,&c2);
+     //printf("Get commoncorder returned %d %d with corners %d->%d and %d->%d\n",cornersA[0],cornersA[1],b1,c1,b2,c2);
+     list_to_bool(auxCorner,world->cell_matrix[cornersA[0]][cornersA[1]]);
+     if(cornersA[0] != -1 && cornersA[1] != -1){
+       
+        for(itc = 0; itc < world->sizeZ;itc ++){
+          printf("corner is %d, bc1 is %d, bc2 is %d\n",auxCorner[itc], world->borders[b1].corners[c1].zArray[itc],world->borders[b2].corners[c2].zArray[itc]);
+          if(auxCorner[itc] == 0 && world->borders[b1].corners[c1].zArray[itc] == 1 && world->borders[b2].corners[c2].zArray[itc] == 1){
+              pos_aux.x = cornersA[0];
+              pos_aux.y = cornersA[1];
+              pos_aux.z = itc;
+              desnormalize(&pos_aux.x,&pos_aux.y);
+              printf("Adding to %d %d \n",cornersA[0],cornersA[1]);
+              world->cell_matrix[cornersA[0]][cornersA[1]] = insert_new_cell(world->cell_matrix[cornersA[0]][cornersA[1]],pos_aux,world->sizeZ - 1) ;
+            
+          }
+
+          
+        }
+     }
+     
+  }
+  free(auxCorner);
 }
 
 void world_update_gen(){
@@ -404,7 +476,7 @@ void world_print(FILE * file){
 }
 
 void fetch_borders(){
-  int it = 0, it2 = 0, it3, it5 = 0;
+  int it = 0, it2 = 0, it3, it5 = 0, it6 = 0;
   cell_ptr aux,aux2;
   int * sendBufZ = NULL;
   int * recvBufZ = (int *) calloc(world->sizeZ + 2,sizeof(int));
@@ -419,6 +491,7 @@ void fetch_borders(){
   int peerCords[4][2];
   int peerRank[4];
   int breakCounter = 0;
+  int relativeBorder[4];
 
   cell_ptr aux4;
   world->test = 0;
@@ -441,25 +514,29 @@ void fetch_borders(){
   MPI_Cart_coords(world->comm,world->pID,2,myCords);
 
   peerCords[0][0] = myCords[0];
-  peerCords[0][1] = get_coord(myCords[1] - 1,world->dim_size[1]);
+  peerCords[0][1] = get_coord(myCords[1] - 1,world->dim_size[1]); //vai dar a y menores
+  relativeBorder[0] = 1;
   MPI_Cart_rank(world->comm, peerCords[0], &peerRank[0]);
   toSendX[0] = 0;
   toSendY[0] = 0;
  
   peerCords[1][0] = myCords[0];
-  peerCords[1][1] = get_coord(myCords[1] + 1,world->dim_size[1]);
+  peerCords[1][1] = get_coord(myCords[1] + 1,world->dim_size[1]); 
+  relativeBorder[1] = 0;
   MPI_Cart_rank(world->comm, peerCords[1], &peerRank[1]);
   toSendX[1] = 0;
   toSendY[1] = world->sizeY - 1;
 
   peerCords[2][0] = get_coord(myCords[0] - 1,world->dim_size[0]);
   peerCords[2][1] = myCords[1];
+  relativeBorder[2] = 3;
   MPI_Cart_rank(world->comm, peerCords[2], &peerRank[2]);
   toSendX[2] = 0;
   toSendY[2] = 0;
 
   peerCords[3][0] = get_coord(myCords[0] + 1,world->dim_size[0]);
   peerCords[3][1] = myCords[1];
+  relativeBorder[3] = 2;
   MPI_Cart_rank(world->comm, peerCords[3], &peerRank[3]);
   toSendX[3] = world->sizeX - 1;
   toSendY[3] = 0;
@@ -500,17 +577,28 @@ void fetch_borders(){
             desnormalize(&recvBufZ[0],&recvBufZ[1]);
 
 
-            world->borders[it3].cells[recvIndex] = arrayToList(recvBufZ[0],recvBufZ[1],recvBufZ, recvBufSize, world->sizeZ, 2); //insert new cell uses recvBufSize as maxPos.. Problem??
-            
-       /*    for(aux4 = world->borders[it3].cells[recvIndex]; cell_exists(aux4); aux4 = cell_get_next(aux4)){
-              if(cell_get_pos(aux4).x >= 50 || cell_get_pos(aux4).x < 0 || cell_get_pos(aux4).y >= 50 || cell_get_pos(aux4).y < 0
-                || cell_get_pos(aux4).z >= 50 || cell_get_pos(aux4).z <0)
-                  printf("DEU MERDA\n");
-              //printf("p%d z_bordered: (%d,%d,%d)\n",world->pID, cell_get_pos(aux4).x,cell_get_pos(aux4).y,cell_get_pos(aux4).z);
+            world->borders[recvBufZ[2]].cells[recvIndex] = arrayToList(recvBufZ[0],recvBufZ[1],recvBufZ, recvBufSize, world->sizeZ, 3); //insert new cell uses recvBufSize as maxPos.. Problem??
+            if(recvIndex == 0){
+                           // printf("XIXIXI\n");
+               memset(world->borders[recvBufZ[2]].corners[0].zArray,0,sizeof(int) * world->sizeZ);
+               for(it6 = 3; it6 < recvBufSize;it6++){
+                world->borders[recvBufZ[2]].corners[0].zArray[recvBufZ[it6]] = 1;
+               }
+               
             }
-            */
-            //printf("process %d received ZARRAY from border %d\n", world->pID, world->status.MPI_SOURCE);
-          } 
+            else if(recvBufZ[2] >= 2 && recvIndex == world->sizeY-1 ){
+              memset(world->borders[recvBufZ[2]].corners[1].zArray,0,sizeof(int) * world->sizeZ);
+              for(it6 = 3; it6 < recvBufSize;it6++){
+                world->borders[recvBufZ[2]].corners[1].zArray[recvBufZ[it6]] = 1;
+              }
+            }
+            else if(recvBufZ[2] < 2 && recvIndex ==  world->sizeX-1){
+              memset(world->borders[recvBufZ[2]].corners[1].zArray,0,sizeof(int) * world->sizeZ);
+              for(it6 = 3; it6 < recvBufSize;it6++){
+                world->borders[recvBufZ[2]].corners[1].zArray[recvBufZ[it6]] = 1;
+              }
+            }
+    } 
         } 
         MPI_Irecv(recvBufZ, world->sizeZ + 2, MPI_INT, MPI_ANY_SOURCE, TAG_RPLY_Z_LST, world->comm, &Z_RPLY);
       }
@@ -522,7 +610,7 @@ void fetch_borders(){
       if((it2 < world->sizeX && it < 2)  || (it2 < world->sizeY && it >= 2)){
         
         //printf("p%d sending matrixPos x: %d y: %d (it2 %d) to p%d\n", world->pID, toSendX[it], toSendY[it], it2, peerRank[it]);
-        sendBufZ = list_to_array(world->cell_matrix[toSendX[it]][toSendY[it]], &toSendSize, world->sizeZ + 2, 2);
+        sendBufZ = list_to_array(world->cell_matrix[toSendX[it]][toSendY[it]], &toSendSize, world->sizeZ + 2, 3);
        // for(it3 = 2; it3 < toSendSize; it3 ++){
           //printf("p%d z_bordered: (%d,%d,%d)\n",world->pID, toSendX[it],toSendY[it] ,sendBufZ[it3]);
         //}
@@ -530,6 +618,7 @@ void fetch_borders(){
         if(sendBufZ != NULL){
           sendBufZ[0] = toSendX[it];
           sendBufZ[1] = toSendY[it];
+          sendBufZ[2] = relativeBorder[it];
           desnormalize(&sendBufZ[0],&sendBufZ[1]);
   
            /*for(it5 = 2; it5 < toSendSize; it5 ++){
@@ -556,7 +645,15 @@ void fetch_borders(){
       }
     }
   }
-
+ /* if(world->pID != 1) return;
+  for(it2 = 0; it2 < 4; it2++){
+    for(it = 0; it < 2 ; it++){
+      printf(" Border %d corner %d:\n",it2,it);
+      for(it3 = 0; it3< world->sizeZ;it3++){
+        if(world->borders[it2].corners[it].zArray[it3] == 1)printf("%d has 1\n",it3);
+      }
+    }
+  }*/
 }
 void world_print_line(int lineIndex){
   int i;
@@ -565,7 +662,7 @@ void world_print_line(int lineIndex){
   }
 }
 void world_init( int sizeX, int sizeY, int sizeZ, int smallWorldLimits[4], int pid, MPI_Comm comm,int dim_size[2],int pNumb){
-  int it;
+  int it,it2;
   world = &world_st;
   world->sizeX = sizeX;
   world->sizeY = sizeY;
@@ -587,11 +684,18 @@ void world_init( int sizeX, int sizeY, int sizeZ, int smallWorldLimits[4], int p
   for(it = 0; it < 2; it++){
     world->borders[it].cells = (cell_ptr *) malloc(sizeof(cell_ptr) * sizeX );
     memset(world->borders[it].cells, 0, sizeof(cell_ptr) * sizeX );
+    for(it2 = 0; it2<2; it2++){
+      world->borders[it].corners[it2].zArray = (int*) calloc(world->sizeZ,sizeof(int));
+    }
   }
 
   for(it = 2; it < 4; it++){
     world->borders[it].cells = (cell_ptr *) malloc(sizeof(cell_ptr) * sizeY);
     memset(world->borders[it].cells, 0, sizeof(cell_ptr) * sizeY );
+
+    for(it2 = 0; it2<2; it2++){
+      world->borders[it].corners[it2].zArray = (int*) calloc(world->sizeZ,sizeof(int));
+    }
   }
 
   world->destroy = world_destroy;
